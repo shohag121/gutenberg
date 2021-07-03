@@ -28,6 +28,7 @@ import {
 	BottomSheetSelectControl,
 	FooterMessageControl,
 	FooterMessageLink,
+	ExternalLink,
 	Badge,
 } from '@wordpress/components';
 import {
@@ -440,12 +441,13 @@ export class ImageEdit extends Component {
 						{ __(
 							'Describe the purpose of the image. Leave empty if the image is purely decorative. '
 						) }
-						<FooterMessageLink
+						<ExternalLink
 							href={
 								'https://www.w3.org/WAI/tutorials/images/decision-tree/'
 							}
-							value={ __( 'What is alt text?' ) }
-						/>
+						>
+							{ __( 'What is alt text?' ) }
+						</ExternalLink>
 					</>
 				}
 			/>
