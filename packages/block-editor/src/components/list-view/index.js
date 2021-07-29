@@ -2,7 +2,7 @@
  * WordPress dependencies
  */
 
-import { useMergeRefs } from '@wordpress/compose';
+import { useMergeRefs, useReducedMotion } from '@wordpress/compose';
 import { __experimentalTreeGrid as TreeGrid } from '@wordpress/components';
 import { useDispatch } from '@wordpress/data';
 import {
@@ -105,6 +105,8 @@ function ListView(
 		collapse( row?.dataset?.block );
 	};
 
+	const animate = ! useReducedMotion();
+
 	const contextValue = useMemo(
 		() => ( {
 			__experimentalFeatures,
@@ -113,6 +115,7 @@ function ListView(
 			expandedState,
 			expand,
 			collapse,
+			animate,
 		} ),
 		[
 			__experimentalFeatures,
@@ -121,6 +124,7 @@ function ListView(
 			expandedState,
 			expand,
 			collapse,
+			animate,
 		]
 	);
 
@@ -136,6 +140,7 @@ function ListView(
 				ref={ treeGridRef }
 				onCollapseRow={ collapseRow }
 				onExpandRow={ expandRow }
+				animate={ animate }
 			>
 				<ListViewContext.Provider value={ contextValue }>
 					<ListViewBranch

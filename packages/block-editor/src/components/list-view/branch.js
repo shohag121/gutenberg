@@ -27,9 +27,9 @@ export default function ListViewBranch( props ) {
 		parentBlockClientId,
 		level = 1,
 		terminatedLevels = [],
-		path = [],
 		isBranchSelected = false,
 		isLastOfBranch = false,
+		animateToggleOpen = false,
 	} = props;
 
 	const isTreeRoot = ! parentBlockClientId;
@@ -44,7 +44,13 @@ export default function ListViewBranch( props ) {
 	const rowCount = hasAppender ? blockCount + 1 : blockCount;
 	const appenderPosition = rowCount;
 
-	const { expandedState, expand, collapse } = useListViewContext();
+	const {
+		expandedState,
+		expand,
+		collapse,
+		isTreeGridMounted,
+		animate,
+	} = useListViewContext();
 
 	return (
 		<>
@@ -55,7 +61,6 @@ export default function ListViewBranch( props ) {
 				const updatedTerminatedLevels = isLastRowAtLevel
 					? [ ...terminatedLevels, level ]
 					: terminatedLevels;
-				const updatedPath = [ ...path, position ];
 				const hasNestedBlocks =
 					showNestedBlocks && !! innerBlocks && !! innerBlocks.length;
 				const hasNestedAppender = itemHasAppender( clientId );
@@ -93,6 +98,13 @@ export default function ListViewBranch( props ) {
 					}
 				};
 
+				const animateToggle =
+					animate &&
+					( animateToggleOpen ||
+						( isExpanded &&
+							isTreeGridMounted &&
+							expandedState[ clientId ] !== undefined ) );
+
 				return (
 					<Fragment key={ clientId }>
 						<ListViewBlock
@@ -108,8 +120,8 @@ export default function ListViewBranch( props ) {
 							siblingBlockCount={ blockCount }
 							showBlockMovers={ showBlockMovers }
 							terminatedLevels={ terminatedLevels }
-							path={ updatedPath }
 							isExpanded={ isExpanded }
+							animateToggleOpen={ animateToggle }
 						/>
 						{ hasNestedBranch && isExpanded && (
 							<ListViewBranch
@@ -126,7 +138,7 @@ export default function ListViewBranch( props ) {
 								parentBlockClientId={ clientId }
 								level={ level + 1 }
 								terminatedLevels={ updatedTerminatedLevels }
-								path={ updatedPath }
+								animateToggleOpen={ animateToggle }
 							/>
 						) }
 					</Fragment>
@@ -139,7 +151,6 @@ export default function ListViewBranch( props ) {
 					rowCount={ appenderPosition }
 					level={ level }
 					terminatedLevels={ terminatedLevels }
-					path={ [ ...path, appenderPosition ] }
 				/>
 			) }
 		</>
