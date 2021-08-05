@@ -12,10 +12,11 @@ import {
 	__experimentalTreeGridRow as TreeGridRow,
 	MenuGroup,
 	MenuItem,
+	__unstableUseMotionValue as useMotionValue,
 } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { moreVertical } from '@wordpress/icons';
-import { useState, useRef, useEffect } from '@wordpress/element';
+import { useState, useRef, useEffect, memo } from '@wordpress/element';
 import { useDispatch, useSelect } from '@wordpress/data';
 
 /**
@@ -30,7 +31,17 @@ import BlockSettingsDropdown from '../block-settings-menu/block-settings-dropdow
 import { useListViewContext } from './context';
 import { store as blockEditorStore } from '../../store';
 
-export default function ListViewBlock( {
+const ROW_VARIANTS = {
+	init: {
+		opacity: 0,
+	},
+	open: {
+		opacity: 1,
+	},
+};
+const DRAG_CONSTANTS = { left: -10, right: 10 };
+
+function ListViewBlock( {
 	block,
 	isSelected,
 	isBranchSelected,
@@ -44,26 +55,44 @@ export default function ListViewBlock( {
 	showBlockMovers,
 	isExpanded,
 	animateToggleOpen,
+	setPosition,
+	moveItem,
+	dropItem,
+	listPosition,
+	parentId,
+	draggingId,
+	setDraggingId,
 } ) {
 	const cellRef = useRef( null );
 	const [ isHovered, setIsHovered ] = useState( false );
 	const { clientId } = block;
-	const { isDragging, blockParents } = useSelect(
-		( select ) => {
-			const {
-				isBlockBeingDragged,
-				isAncestorBeingDragged,
-				getBlockParents,
-			} = select( blockEditorStore );
+	const {
+		__experimentalFeatures: withExperimentalFeatures,
+		__experimentalPersistentListViewFeatures: withExperimentalPersistentListViewFeatures,
+		isTreeGridMounted,
+		useAnimation,
+		collapse,
+		expand,
+	} = useListViewContext();
 
+	const { blockParents, dropContainer, dropSibling } = useSelect(
+		( select ) => {
+			const { getBlockParents, canInsertBlocks } = select(
+				blockEditorStore
+			);
 			return {
-				isDragging:
-					isBlockBeingDragged( clientId ) ||
-					isAncestorBeingDragged( clientId ),
 				blockParents: getBlockParents( clientId ),
+				dropContainer:
+					draggingId &&
+					draggingId !== clientId &&
+					canInsertBlocks( [ draggingId ], clientId ),
+				dropSibling:
+					draggingId &&
+					draggingId !== clientId &&
+					canInsertBlocks( [ draggingId ], parentId ),
 			};
 		},
-		[ clientId ]
+		[ clientId, draggingId ]
 	);
 
 	const {
@@ -77,12 +106,29 @@ export default function ListViewBlock( {
 		'block-editor-list-view-block__mover-cell',
 		{ 'is-visible': isHovered }
 	);
-	const {
-		__experimentalFeatures: withExperimentalFeatures,
-		__experimentalPersistentListViewFeatures: withExperimentalPersistentListViewFeatures,
-		isTreeGridMounted,
-		animate,
-	} = useListViewContext();
+
+	useEffect( () => {
+		setPosition( listPosition, {
+			...{
+				clientId,
+				dropContainer,
+				dropSibling,
+				parentId,
+				isLastChild: position === siblingBlockCount,
+			},
+		} );
+		return () => {
+			setPosition( listPosition, undefined );
+		};
+	}, [
+		listPosition,
+		draggingId,
+		dropContainer,
+		dropSibling,
+		position,
+		siblingBlockCount,
+	] );
+
 	const listViewBlockSettingsClassName = classnames(
 		'block-editor-list-view-block__menu-cell',
 		{ 'is-visible': isHovered }
@@ -115,11 +161,15 @@ export default function ListViewBlock( {
 
 	const onMouseEnter = () => {
 		setIsHovered( true );
-		highlightBlock( clientId, true );
+		if ( ! draggingId ) {
+			highlightBlock( clientId, true );
+		}
 	};
 	const onMouseLeave = () => {
 		setIsHovered( false );
-		highlightBlock( clientId, false );
+		if ( ! draggingId ) {
+			highlightBlock( clientId, false );
+		}
 	};
 
 	const classes = classnames( {
@@ -130,8 +180,59 @@ export default function ListViewBlock( {
 		'is-last-of-selected-branch':
 			withExperimentalPersistentListViewFeatures &&
 			isLastOfSelectedBranch,
-		'is-dragging': isDragging,
+		'is-moving': draggingId === clientId, //avoid is-dragging which has an !important rule
 	} );
+
+	const onDragStart = () => {
+		setDraggingId( clientId );
+		collapse( clientId );
+	};
+
+	const onDragEnd = () => {
+		dropItem();
+		setDraggingId( null );
+		expand( clientId );
+	};
+
+	const velocity = useMotionValue( 0 );
+	const onDrag = ( event, info ) => {
+		// When swapping items with a neighbor a positive translate value is moving down, and a
+		// negative value is moving up in the onViewportBoxUpdate callback.
+		//
+		// However, when skipping over items, we need mouse velocity to understand if the user is
+		// dragging up or down. This is because with the view box in the same position, the
+		// originPoint is modified and the translate value will flip its sign.
+		//
+		// Velocity is not available in onViewportBoxUpdate, so we set this motion value here:
+		velocity.set( info.velocity.y );
+	};
+
+	const blockDrag = ( box, delta ) => {
+		if ( draggingId === clientId ) {
+			moveItem( {
+				block,
+				translate: delta.y.translate,
+				translateX: delta.x.translate,
+				velocity,
+				listPosition,
+			} );
+		}
+	};
+
+	const animationProps = useAnimation
+		? {
+				variants: ROW_VARIANTS,
+				animate: 'open',
+				initial: animateToggleOpen ? 'init' : false,
+				drag: true,
+				dragConstraints: DRAG_CONSTANTS,
+				onDragStart,
+				onDrag,
+				onDragEnd,
+				onViewportBoxUpdate: blockDrag,
+				layoutId: `list-view-block-${ clientId }`,
+		  }
+		: {};
 
 	return (
 		<TreeGridRow
@@ -146,8 +247,8 @@ export default function ListViewBlock( {
 			id={ `list-view-block-${ clientId }` }
 			data-block={ clientId }
 			isExpanded={ isExpanded }
-			animate={ animate }
-			animateOnMount={ animateToggleOpen }
+			useAnimation={ useAnimation }
+			{ ...animationProps }
 		>
 			<TreeGridCell
 				className="block-editor-list-view-block__contents-cell"
@@ -249,3 +350,16 @@ export default function ListViewBlock( {
 		</TreeGridRow>
 	);
 }
+
+function shouldSkipUpdateIfDragging( prevProps, nextProps ) {
+	if ( prevProps.draggingId && nextProps.draggingId ) {
+		const samePosition = nextProps.listPosition === prevProps.listPosition;
+		const sameParent = nextProps.parentId === prevProps.parentId;
+		const expanded = nextProps.isExpanded === prevProps.isExpanded;
+		return samePosition && sameParent && expanded;
+	}
+	// If not dragging, default to native behavior of always rendering if the parent has rendered.
+	return false;
+}
+
+export default memo( ListViewBlock, shouldSkipUpdateIfDragging );

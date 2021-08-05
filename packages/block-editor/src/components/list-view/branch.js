@@ -16,6 +16,21 @@ import ListViewAppender from './appender';
 import { isClientIdSelected } from './utils';
 import { useListViewContext } from './context';
 
+function countBlocks( block, expandedState ) {
+	const isExpanded = expandedState[ block.clientId ] ?? true;
+	if ( isExpanded ) {
+		return 1 + block.innerBlocks.reduce( countReducer( expandedState ), 0 );
+	}
+	return 1;
+}
+const countReducer = ( expandedState ) => ( count, block ) => {
+	const isExpanded = expandedState[ block.clientId ] ?? true;
+	if ( isExpanded && block.innerBlocks.length > 0 ) {
+		return count + countBlocks( block, expandedState );
+	}
+	return count + 1;
+};
+
 export default function ListViewBranch( props ) {
 	const {
 		blocks,
@@ -30,6 +45,12 @@ export default function ListViewBranch( props ) {
 		isBranchSelected = false,
 		isLastOfBranch = false,
 		animateToggleOpen = false,
+		setPosition,
+		moveItem,
+		dropItem,
+		listPosition = 0,
+		draggingId,
+		setDraggingId,
 	} = props;
 
 	const isTreeRoot = ! parentBlockClientId;
@@ -49,8 +70,10 @@ export default function ListViewBranch( props ) {
 		expand,
 		collapse,
 		isTreeGridMounted,
-		animate,
+		useAnimation,
 	} = useListViewContext();
+
+	let nextPosition = listPosition;
 
 	return (
 		<>
@@ -99,12 +122,17 @@ export default function ListViewBranch( props ) {
 				};
 
 				const animateToggle =
-					animate &&
+					useAnimation &&
 					( animateToggleOpen ||
 						( isExpanded &&
 							isTreeGridMounted &&
 							expandedState[ clientId ] !== undefined ) );
-
+				if ( index > 0 ) {
+					nextPosition += countBlocks(
+						filteredBlocks[ index - 1 ],
+						expandedState
+					);
+				}
 				return (
 					<Fragment key={ clientId }>
 						<ListViewBlock
@@ -122,6 +150,13 @@ export default function ListViewBranch( props ) {
 							terminatedLevels={ terminatedLevels }
 							isExpanded={ isExpanded }
 							animateToggleOpen={ animateToggle }
+							setPosition={ setPosition }
+							moveItem={ moveItem }
+							dropItem={ dropItem }
+							listPosition={ nextPosition }
+							parentId={ parentBlockClientId }
+							draggingId={ draggingId }
+							setDraggingId={ setDraggingId }
 						/>
 						{ hasNestedBranch && isExpanded && (
 							<ListViewBranch
@@ -139,6 +174,12 @@ export default function ListViewBranch( props ) {
 								level={ level + 1 }
 								terminatedLevels={ updatedTerminatedLevels }
 								animateToggleOpen={ animateToggle }
+								setPosition={ setPosition }
+								moveItem={ moveItem }
+								dropItem={ dropItem }
+								listPosition={ nextPosition + 1 }
+								draggingId={ draggingId }
+								setDraggingId={ setDraggingId }
 							/>
 						) }
 					</Fragment>

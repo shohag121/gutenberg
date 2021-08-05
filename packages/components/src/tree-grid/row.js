@@ -8,17 +8,6 @@ import { forwardRef } from '@wordpress/element';
  */
 import { __unstableMotion as motion } from '../animation';
 
-const TREE_GRID_ROW_VARIANTS = {
-	init: {
-		opacity: 0,
-	},
-	open: {
-		opacity: 1,
-	},
-};
-
-const NO_MOTION_VARIANTS = { init: false, open: false };
-
 function TreeGridRow(
 	{
 		children,
@@ -26,8 +15,7 @@ function TreeGridRow(
 		positionInSet,
 		setSize,
 		isExpanded,
-		animate = false,
-		animateOnMount = false,
+		useAnimation = false,
 		...props
 	},
 	ref
@@ -40,17 +28,14 @@ function TreeGridRow(
 		//
 		// eslint-disable-next-line jsx-a11y/role-supports-aria-props
 		<motion.tr
-			layout={ animate ? 'position' : false }
-			initial={ animateOnMount ? 'init' : false }
-			animate={ 'open' }
-			variants={ animate ? TREE_GRID_ROW_VARIANTS : NO_MOTION_VARIANTS }
-			{ ...props }
+			layout={ useAnimation ? 'position' : false }
 			ref={ ref }
 			role="row"
 			aria-level={ level }
 			aria-posinset={ positionInSet }
 			aria-setsize={ setSize }
 			aria-expanded={ isExpanded }
+			{ ...props }
 		>
 			{ children }
 		</motion.tr>

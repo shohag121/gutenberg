@@ -1,8 +1,12 @@
 /**
+ * External dependencies
+ */
+import classnames from 'classnames';
+
+/**
  * WordPress dependencies
  */
-
-import { useMergeRefs, useReducedMotion } from '@wordpress/compose';
+import { useReducedMotion } from '@wordpress/compose';
 import { __experimentalTreeGrid as TreeGrid } from '@wordpress/components';
 import { useDispatch } from '@wordpress/data';
 import {
@@ -11,6 +15,7 @@ import {
 	useMemo,
 	useRef,
 	useReducer,
+	useState,
 	forwardRef,
 } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
@@ -20,10 +25,14 @@ import { __ } from '@wordpress/i18n';
  */
 import ListViewBranch from './branch';
 import { ListViewContext } from './context';
-import ListViewDropIndicator from './drop-indicator';
 import useListViewClientIds from './use-list-view-client-ids';
-import useListViewDropZone from './use-list-view-drop-zone';
 import { store as blockEditorStore } from '../../store';
+import {
+	removeItemFromTree,
+	addItemToTree,
+	addChildItemToTree,
+	findFirstValidSibling,
+} from './utils';
 
 const noop = () => {};
 const expanded = ( state, action ) => {
@@ -43,12 +52,15 @@ const expanded = ( state, action ) => {
  * present at the very top of the navigation grid.
  *
  * @param {Object}   props                                          Components props.
- * @param {Array}    props.blocks                                   Custom subset of block client IDs to be used instead of the default hierarchy.
+ * @param {Array}    props.blocks                                   Custom subset of block client IDs to be used
+ *                                                                  instead of the default hierarchy.
  * @param {Function} props.onSelect                                 Block selection callback.
  * @param {boolean}  props.showNestedBlocks                         Flag to enable displaying nested blocks.
- * @param {boolean}  props.showOnlyCurrentHierarchy                 Flag to limit the list to the current hierarchy of blocks.
+ * @param {boolean}  props.showOnlyCurrentHierarchy                 Flag to limit the list to the current hierarchy of
+ *                                                                  blocks.
  * @param {boolean}  props.__experimentalFeatures                   Flag to enable experimental features.
- * @param {boolean}  props.__experimentalPersistentListViewFeatures Flag to enable features for the Persistent List View experiment.
+ * @param {boolean}  props.__experimentalPersistentListViewFeatures Flag to enable features for the Persistent List
+ *                                                                  View experiment.
  * @param {Object}   ref                                            Forwarded ref
  */
 function ListView(
@@ -67,7 +79,9 @@ function ListView(
 		showOnlyCurrentHierarchy,
 		__experimentalPersistentListViewFeatures
 	);
-	const { selectBlock } = useDispatch( blockEditorStore );
+	const { selectBlock, moveBlocksToPosition } = useDispatch(
+		blockEditorStore
+	);
 	const selectEditorBlock = useCallback(
 		( clientId ) => {
 			selectBlock( clientId );
@@ -75,37 +89,248 @@ function ListView(
 		},
 		[ selectBlock, onSelect ]
 	);
-	const [ expandedState, setExpandedState ] = useReducer( expanded, {} );
-
-	const { ref: dropZoneRef, target: blockDropTarget } = useListViewDropZone();
-	const elementRef = useRef();
-	const treeGridRef = useMergeRefs( [ elementRef, dropZoneRef, ref ] );
 
 	const isMounted = useRef( false );
+
 	useEffect( () => {
 		isMounted.current = true;
 	}, [] );
 
-	const expand = ( clientId ) => {
-		if ( ! clientId ) {
-			return;
-		}
-		setExpandedState( { type: 'expand', clientId } );
-	};
-	const collapse = ( clientId ) => {
-		if ( ! clientId ) {
-			return;
-		}
-		setExpandedState( { type: 'collapse', clientId } );
-	};
-	const expandRow = ( row ) => {
-		expand( row?.dataset?.block );
-	};
-	const collapseRow = ( row ) => {
-		collapse( row?.dataset?.block );
-	};
+	// State and callback functions used to support expand/collapse functions
+	const [ expandedState, setExpandedState ] = useReducer( expanded, {} );
+	const expand = useCallback(
+		( clientId ) => {
+			if ( ! clientId ) {
+				return;
+			}
+			setExpandedState( { type: 'expand', clientId } );
+		},
+		[ setExpandedState ]
+	);
+	const collapse = useCallback(
+		( clientId ) => {
+			if ( ! clientId ) {
+				return;
+			}
+			setExpandedState( { type: 'collapse', clientId } );
+		},
+		[ setExpandedState ]
+	);
+	const expandRow = useCallback(
+		( row ) => {
+			expand( row?.dataset?.block );
+		},
+		[ expand ]
+	);
+	const collapseRow = useCallback(
+		( row ) => {
+			collapse( row?.dataset?.block );
+		},
+		[ collapse ]
+	);
 
-	const animate = ! useReducedMotion();
+	// All animations and dragging should be disabled when folks prefer reduced motion.
+	const useAnimation = ! useReducedMotion();
+
+	// Dragging Support
+	//
+	// To support in-place item swapping when dragging, we switch to LOCAL state to represent the current block tree.
+	// Initial value is GLOBAL.This is set to LOCAL on dragStart, RESOLVING_DROP on drop, and back to GLOBAL when we
+	// detect clientIdsTree has resolved from the drop action.
+	//
+	// RESOLVING_DROP is necessary, otherwise, we'll see valid moves animating items jumping from it's dropped position
+	// to its old position and back to its dropped position.
+	const LOCAL = 'local';
+	const RESOLVING_DROP = 'resolving-drop';
+	const GLOBAL = 'global';
+	const [ stateType, setStateType ] = useState( GLOBAL );
+	const [ tree, setTree ] = useState( clientIdsTree );
+	const [ draggingId, setDraggingId ] = useState( null );
+	useEffect( () => {
+		if ( draggingId ) {
+			setStateType( LOCAL );
+			setTree( clientIdsTree );
+		}
+	}, [ draggingId ] );
+	useEffect( () => {
+		// stateType is intentionally omitted from useEffect dependencies
+		// we want the next instance of where clientIdsTree updates after we drop an item
+		if ( stateType === RESOLVING_DROP ) {
+			setStateType( GLOBAL );
+		}
+	}, [ clientIdsTree ] );
+
+	const positionsRef = useRef( {} );
+	const positions = positionsRef.current;
+	const setPosition = ( clientId, offset ) =>
+		( positions[ clientId ] = offset );
+
+	// Used in dragging to specify a drop target
+	const lastTarget = useRef( null );
+
+	// Fired on item drop
+	const dropItem = async () => {
+		const target = lastTarget.current;
+		if ( ! target ) {
+			return;
+		}
+		const { clientId, originalParent, targetId, targetIndex } = target;
+		lastTarget.current = null;
+		await moveBlocksToPosition(
+			[ clientId ],
+			originalParent,
+			targetId,
+			targetIndex
+		);
+		setStateType( RESOLVING_DROP );
+	};
+	// Note that this is fired on onViewportBoxUpdate instead of onDrag.
+	const moveItem = ( {
+		block,
+		translate,
+		translateX,
+		listPosition,
+		velocity,
+	} ) => {
+		const ITEM_HEIGHT = 36;
+		const LEFT_RIGHT_DRAG_THRESHOLD = 15;
+		const UP = 'up';
+		const DOWN = 'down';
+
+		const { clientId } = block;
+
+		const v = velocity?.get() ?? 0;
+		if ( v === 0 ) {
+			return;
+		}
+
+		const direction = v > 0 ? DOWN : UP;
+
+		const draggingUpPastBounds =
+			positions[ listPosition + 1 ] === undefined &&
+			direction === UP &&
+			translate > 0;
+		const draggingDownPastBounds =
+			listPosition === 0 && direction === DOWN && translate < 0;
+
+		if ( draggingUpPastBounds || draggingDownPastBounds ) {
+			// If we've dragged past all items with the first or last item, don't start checking for potential swaps
+			// until we're near other items
+			return;
+		}
+
+		if (
+			( direction === DOWN && translate < 0 ) ||
+			( direction === UP && translate > 0 )
+		) {
+			//We're skipping over multiple items, wait until user catches up to the new slot
+			return;
+		}
+
+		if ( Math.abs( translate ) < ITEM_HEIGHT / 2 ) {
+			// Don't bother calculating anything if we haven't moved half a step.
+			return;
+		}
+
+		if ( Math.abs( translateX ) > LEFT_RIGHT_DRAG_THRESHOLD ) {
+			// If we move to the right or left as we drag, allow more freeform targeting
+			// so we can find a new parent container
+			const steps = Math.ceil( Math.abs( translate / ITEM_HEIGHT ) );
+			const nextIndex =
+				direction === UP ? listPosition - steps : listPosition + steps;
+
+			const targetPosition = positions[ nextIndex ];
+
+			if ( ! targetPosition ) {
+				return;
+			}
+			if (
+				targetPosition.dropSibling &&
+				( translateX < 0 ||
+					( translateX > 0 && ! targetPosition.dropContainer ) )
+			) {
+				//Insert as a sibling
+				const {
+					newTree: treeWithoutDragItem,
+					removeParentId,
+				} = removeItemFromTree( clientIdsTree, clientId );
+				const { newTree, targetIndex, targetId } = addItemToTree(
+					treeWithoutDragItem,
+					targetPosition.clientId,
+					block,
+					direction === DOWN ||
+						( direction === UP &&
+							targetPosition.isLastChild &&
+							! targetPosition.dropContainer )
+				);
+				lastTarget.current = {
+					clientId,
+					originalParent: removeParentId,
+					targetId,
+					targetIndex,
+				};
+				setTree( newTree );
+				return;
+			}
+
+			if (
+				targetPosition.dropContainer &&
+				( translateX > 0 ||
+					( translateX < 0 && ! targetPosition.dropSibling ) )
+			) {
+				//Nest block under parent
+				const {
+					newTree: treeWithoutDragItem,
+					removeParentId,
+				} = removeItemFromTree( clientIdsTree, clientId );
+				const newTree = addChildItemToTree(
+					treeWithoutDragItem,
+					targetPosition.clientId,
+					block
+				);
+				lastTarget.current = {
+					clientId,
+					originalParent: removeParentId,
+					targetId: targetPosition.clientId,
+					targetIndex: 0,
+				};
+				setTree( newTree );
+				return;
+			}
+		}
+
+		// If we drag straight up or down, find the next valid sibling to swap places with:
+		const [ targetPosition, nextIndex ] = findFirstValidSibling(
+			positions,
+			listPosition,
+			v
+		);
+
+		if (
+			targetPosition &&
+			Math.abs( translate ) >
+				( ITEM_HEIGHT * Math.abs( listPosition - nextIndex ) ) / 2
+		) {
+			//Sibling swap
+			const {
+				newTree: treeWithoutDragItem,
+				removeParentId,
+			} = removeItemFromTree( clientIdsTree, clientId );
+			const { newTree, targetIndex, targetId } = addItemToTree(
+				treeWithoutDragItem,
+				targetPosition.clientId,
+				block,
+				direction === DOWN
+			);
+			lastTarget.current = {
+				clientId,
+				originalParent: removeParentId,
+				targetId,
+				targetIndex,
+			};
+			setTree( newTree );
+		}
+	};
 
 	const contextValue = useMemo(
 		() => ( {
@@ -115,7 +340,7 @@ function ListView(
 			expandedState,
 			expand,
 			collapse,
-			animate,
+			useAnimation,
 		} ),
 		[
 			__experimentalFeatures,
@@ -124,29 +349,38 @@ function ListView(
 			expandedState,
 			expand,
 			collapse,
-			animate,
+			useAnimation,
 		]
 	);
 
+	const listViewClassnames = classnames( 'block-editor-list-view-tree', {
+		'supports-animation': useAnimation,
+	} );
+
 	return (
 		<>
-			<ListViewDropIndicator
-				listViewRef={ elementRef }
-				blockDropTarget={ blockDropTarget }
-			/>
 			<TreeGrid
-				className="block-editor-list-view-tree"
+				className={ listViewClassnames }
 				aria-label={ __( 'Block navigation structure' ) }
-				ref={ treeGridRef }
+				ref={ ref }
 				onCollapseRow={ collapseRow }
 				onExpandRow={ expandRow }
-				animate={ animate }
+				useAnimation={ useAnimation }
 			>
 				<ListViewContext.Provider value={ contextValue }>
 					<ListViewBranch
-						blocks={ clientIdsTree }
+						blocks={
+							stateType === LOCAL || stateType === RESOLVING_DROP
+								? tree
+								: clientIdsTree
+						}
 						selectBlock={ selectEditorBlock }
 						selectedBlockClientIds={ selectedClientIds }
+						setPosition={ setPosition }
+						moveItem={ moveItem }
+						dropItem={ dropItem }
+						draggingId={ draggingId }
+						setDraggingId={ setDraggingId }
 						{ ...props }
 					/>
 				</ListViewContext.Provider>
