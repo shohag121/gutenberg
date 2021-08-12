@@ -12,8 +12,16 @@ import MenuGroup from '../../menu-group';
 import MenuItem from '../../menu-item';
 import { useToolsPanelHeader } from './hook';
 import { contextConnect } from '../../ui/context';
+import type {
+	ToolsPanelHeaderProps,
+	toolsPanelforwardRef,
+	ToolPanelItem,
+} from '../types';
 
-const ToolsPanelHeader = ( props, forwardedRef ) => {
+const ToolsPanelHeader = (
+	props: ToolsPanelHeaderProps,
+	forwardedRef: toolsPanelforwardRef
+) => {
 	const {
 		hasMenuItems,
 		header,
@@ -35,7 +43,10 @@ const ToolsPanelHeader = ( props, forwardedRef ) => {
 				<DropdownMenu icon={ moreVertical } label={ menuLabel }>
 					{ ( { onClose } ) => (
 						<>
-							<MenuGroup label={ __( 'Display options' ) }>
+							<MenuGroup
+								label={ __( 'Display options' ) }
+								hideSeparator={ false }
+							>
 								{ Object.entries( menuItems ).map(
 									( [ label, isSelected ] ) => {
 										return (
