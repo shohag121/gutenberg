@@ -12,11 +12,11 @@ import MenuGroup from '../../menu-group';
 import MenuItem from '../../menu-item';
 import { useToolsPanelHeader } from './hook';
 import { contextConnect } from '../../ui/context';
-import type { ToolsPanelHeaderProps, toolsPanelforwardRef } from '../types';
+import type { ToolsPanelHeaderProps, forwardRef } from '../types';
 
 const ToolsPanelHeader = (
 	props: ToolsPanelHeaderProps,
-	forwardedRef: toolsPanelforwardRef
+	forwardedRef: forwardRef
 ) => {
 	const {
 		hasMenuItems,
