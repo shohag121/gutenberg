@@ -111,6 +111,31 @@ function addItemToTree( tree, id, item, insertAfter = true, parentId = '' ) {
 	return { newTree, targetId, targetIndex };
 }
 
+function addChildItemToTree( tree, id, item ) {
+	const newTree = [];
+	for ( let index = 0; index < tree.length; index++ ) {
+		const block = tree[ index ];
+		if ( block.clientId === id ) {
+			block.innerBlocks = [ item, ...block.innerBlocks ];
+			newTree.push( block );
+		} else if ( block.clientId !== id ) {
+			if ( block.innerBlocks.length > 0 ) {
+				newTree.push( {
+					...block,
+					innerBlocks: addChildItemToTree(
+						block.innerBlocks,
+						id,
+						item
+					),
+				} );
+			} else {
+				newTree.push( { ...block } );
+			}
+		}
+	}
+	return newTree;
+}
+
 const UP = 'up';
 const DOWN = 'down';
 
@@ -248,8 +273,8 @@ export default function ListView( {
 		isFirstChild,
 		velocity,
 	} ) => {
-		//TODO: support add to container
-		//TODO: support add to child container
+		//TODO: fix nested containers such as columns and default settings
+		//TODO: empty container with appender doesn't add children properly
 		//TODO: simplify state and code
 		const { clientId } = block;
 		const ITEM_HEIGHT = 36;
@@ -312,6 +337,32 @@ export default function ListView( {
 			if ( targetPosition === undefined ) {
 				return;
 			}
+
+			if (
+				position.parentId === targetPosition.parentId &&
+				targetPosition.dropContainer === true
+			) {
+				// ignore if it's valid or not, and let items pass through containers
+				// add to target parent container
+				const {
+					newTree: treeWithoutDragItem,
+					removeParentId,
+				} = removeItemFromTree( clientIdsTree, clientId );
+				const newTree = addChildItemToTree(
+					treeWithoutDragItem,
+					targetPosition.clientId,
+					block
+				);
+				lastTarget.current = {
+					clientId,
+					originalParent: removeParentId,
+					targetId: targetPosition.clientId,
+					targetIndex: 0,
+				};
+				setTree( newTree );
+				return;
+			}
+
 			if ( position.parentId === targetPosition.parentId ) {
 				//Sibling swap
 				const {
@@ -323,6 +374,32 @@ export default function ListView( {
 					targetPosition.clientId,
 					block,
 					direction === DOWN
+				);
+				lastTarget.current = {
+					clientId,
+					originalParent: removeParentId,
+					targetId,
+					targetIndex,
+				};
+				setTree( newTree );
+				return;
+			}
+
+			if (
+				position.parentId !== targetPosition.parentId &&
+				direction === UP
+			) {
+				// ignore if it's valid or not, and let items pass through containers
+				// add to target parent container
+				const {
+					newTree: treeWithoutDragItem,
+					removeParentId,
+				} = removeItemFromTree( clientIdsTree, clientId );
+				const { newTree, targetIndex, targetId } = addItemToTree(
+					treeWithoutDragItem,
+					targetPosition.clientId,
+					block,
+					true
 				);
 				lastTarget.current = {
 					clientId,
