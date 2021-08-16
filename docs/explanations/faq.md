@@ -280,7 +280,7 @@ Our [list of supported browsers can be found in the Make WordPress handbook](htt
 
 ## How do I make my own block?
 
-The best place to start is the [Create a Block Tutorial](https://developer.wordpress.org/block-editor/tutorials/create-block/).
+The best place to start is the [Create a Block Tutorial](https://developer.wordpress.org/block-editor/getting-started/create-block/).
 
 ## Does Gutenberg involve editing posts/pages in the front-end?
 
@@ -288,11 +288,11 @@ No, we are designing Gutenberg primarily as a replacement for the post and page 
 
 ## Given Gutenberg is built in JavaScript, how do old meta boxes (PHP) work?
 
-See the [Meta Box Tutorial](https://developer.wordpress.org/block-editor/tutorials/metabox/) for more information on using Meta boxes with the new block editor.
+See the [Meta Box Tutorial](https://developer.wordpress.org/block-editor/how-to-guides/metabox/) for more information on using Meta boxes with the new block editor.
 
 ## How can plugins extend the Gutenberg UI?
 
-The main extension point we want to emphasize is creating new blocks. Blocks are added to the block editor using plugins, see the [Create a Block Tutorial](https://developer.wordpress.org/block-editor/tutorials/create-block/) to get started.
+The main extension point we want to emphasize is creating new blocks. Blocks are added to the block editor using plugins, see the [Create a Block Tutorial](https://developer.wordpress.org/block-editor/getting-stared/create-block/) to get started.
 
 ## Are Custom Post Types still supported?
 
@@ -304,7 +304,7 @@ Yes, a columns block is available in Gutenberg.
 
 ## Does Gutenberg support nested blocks?
 
-Yes, it is supported. You can have multiple levels of nesting – blocks within blocks within blocks. See the [Nested Block Tutorial](https://developer.wordpress.org/block-editor/tutorials/block-tutorial/nested-blocks-inner-blocks/) for more information.
+Yes, it is supported. You can have multiple levels of nesting – blocks within blocks within blocks. See the [Nested Block Tutorial](https://developer.wordpress.org/block-editor/how-to-guides/block-tutorial/nested-blocks-inner-blocks/) for more information.
 
 ## Does drag and drop work for rearranging blocks?
 
