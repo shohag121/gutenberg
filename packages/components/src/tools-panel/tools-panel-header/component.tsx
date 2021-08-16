@@ -1,4 +1,10 @@
 /**
+ * External dependencies
+ */
+// eslint-disable-next-line no-restricted-imports
+import type { Ref } from 'react';
+
+/**
  * WordPress dependencies
  */
 import { check, moreVertical } from '@wordpress/icons';
@@ -11,12 +17,12 @@ import DropdownMenu from '../../dropdown-menu';
 import MenuGroup from '../../menu-group';
 import MenuItem from '../../menu-item';
 import { useToolsPanelHeader } from './hook';
-import { contextConnect } from '../../ui/context';
-import type { ToolsPanelHeaderProps, forwardRef } from '../types';
+import { contextConnect, PolymorphicComponentProps } from '../../ui/context';
+import type { ToolsPanelHeaderProps } from '../types';
 
 const ToolsPanelHeader = (
-	props: ToolsPanelHeaderProps,
-	forwardedRef: forwardRef
+	props: PolymorphicComponentProps< ToolsPanelHeaderProps, 'h2' >,
+	forwardedRef: Ref< any >
 ) => {
 	const {
 		hasMenuItems,
