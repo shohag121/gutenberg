@@ -139,23 +139,6 @@ function addChildItemToTree( tree, id, item ) {
 const UP = 'up';
 const DOWN = 'down';
 
-// eslint-disable-next-line no-unused-vars
-function findFirstValidPosition( positions, current, translate, moveDown ) {
-	//TODO: add this back when implementing skipping over invalid items
-	const ITEM_HEIGHT = 36;
-	const iterate = moveDown ? 1 : -1;
-	let index = current + iterate;
-	let diff = Math.abs( translate );
-	while ( positions[ index ] !== undefined && diff > ITEM_HEIGHT / 2 ) {
-		const position = positions[ index ];
-		if ( position.dropContainer || position.dropSibling ) {
-			return position;
-		}
-		index += iterate;
-		diff = diff - ITEM_HEIGHT;
-	}
-}
-
 /**
  * Wrap `ListViewRows` with `TreeGrid`. ListViewRows is a
  * recursive component (it renders itself), so this ensures TreeGrid is only
@@ -296,6 +279,14 @@ export default function ListView( {
 		if ( draggingUpPastBounds || draggingDownPastBounds ) {
 			// If we've dragged past all items with the first or last item, don't start checking for potential swaps
 			// until we're near other items
+			return;
+		}
+
+		if (
+			( direction === DOWN && translate < 0 ) ||
+			( direction === UP && translate > 0 )
+		) {
+			//We're skipping over multiple items, wait until user catches up to the new slot
 			return;
 		}
 
