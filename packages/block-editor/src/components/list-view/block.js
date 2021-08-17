@@ -85,6 +85,7 @@ export default function ListViewBlock( {
 		setDraggingId,
 		collapse,
 		expand,
+		targetId,
 	} = useListViewContext();
 
 	//TODO: handle block delete

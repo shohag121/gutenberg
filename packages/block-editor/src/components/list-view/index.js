@@ -156,39 +156,6 @@ function findFirstValidSibling( positions, current, velocity ) {
 	return [ null, null ];
 }
 
-function findFirstValidContainer( positions, current, velocity ) {
-	const iterate = velocity > 0 ? 1 : -1;
-	let index = current + iterate;
-	while ( positions[ index ] !== undefined ) {
-		const position = positions[ index ];
-		if ( position.dropContainer ) {
-			return position;
-		}
-		index += iterate;
-	}
-}
-
-function findBreakoutParentAndIndex( positions, current ) {
-	let index = current - 2; //Has to be at least 2 above
-	console.log( { current, index, p: positions[ index ] } );
-	const currentPosition = positions[ current ];
-	while ( positions[ index ] !== undefined ) {
-		const position = positions[ index ];
-		console.log( 'compare', currentPosition, position );
-
-		//TODO: also test the level
-		if (
-			( position.dropContainer &&
-				position.parentId !== currentPosition.parentId ) ||
-			position.parentId === ''
-		) {
-			return [ position, index ];
-		}
-		index -= 1;
-	}
-	return [ null, null ];
-}
-
 /**
  * Wrap `ListViewRows` with `TreeGrid`. ListViewRows is a
  * recursive component (it renders itself), so this ensures TreeGrid is only
@@ -329,7 +296,6 @@ export default function ListView( {
 		if ( draggingUpPastBounds || draggingDownPastBounds ) {
 			// If we've dragged past all items with the first or last item, don't start checking for potential swaps
 			// until we're near other items
-			console.log( 'dragging past bounds...' );
 			return;
 		}
 
@@ -338,7 +304,6 @@ export default function ListView( {
 			( direction === UP && translate > 0 )
 		) {
 			//We're skipping over multiple items, wait until user catches up to the new slot
-			console.log( 'catching up to slot...' );
 			return;
 		}
 
@@ -346,17 +311,69 @@ export default function ListView( {
 
 		if ( Math.abs( translate ) < ITEM_HEIGHT / 2 ) {
 			//don't bother calculating anything if we haven't moved half a step.
-			console.log( 'below min threshold...' );
 			return;
 		}
 
 		if ( Math.abs( translateX ) > UPDATE_PARENT_THRESHOLD ) {
+			const steps = Math.ceil( Math.abs( translate / ITEM_HEIGHT ) );
+			const nextIndex =
+				direction === UP ? listPosition - steps : listPosition + steps;
+
+			const targetPosition = positions[ nextIndex ];
+
 			//TODO: if we move to the right or left as we drag, allow more freeform targeting
-			//so we can find a new parent container
+			// so we can find a new parent container
 			if ( translateX < 0 ) {
-				console.log( 'try breaking out a level...', position );
+				console.log(
+					'try breaking out a level...',
+					nextIndex,
+					targetPosition
+				);
+				if ( targetPosition && ! targetPosition.parentId ) {
+					const {
+						newTree: treeWithoutDragItem,
+						removeParentId,
+					} = removeItemFromTree( clientIdsTree, clientId );
+					const { newTree, targetIndex, targetId } = addItemToTree(
+						treeWithoutDragItem,
+						targetPosition.clientId,
+						block,
+						direction === DOWN
+					);
+					lastTarget.current = {
+						clientId,
+						originalParent: removeParentId,
+						targetId,
+						targetIndex,
+					};
+					setTree( newTree );
+					return;
+				}
 			} else {
-				console.log( 'try nesting a level...', position );
+				if ( targetPosition && targetPosition.dropContainer ) {
+					const {
+						newTree: treeWithoutDragItem,
+						removeParentId,
+					} = removeItemFromTree( clientIdsTree, clientId );
+					const newTree = addChildItemToTree(
+						treeWithoutDragItem,
+						targetPosition.clientId,
+						block
+					);
+					lastTarget.current = {
+						clientId,
+						originalParent: removeParentId,
+						targetId: targetPosition.clientId,
+						targetIndex: 0,
+					};
+					setTree( newTree );
+					return;
+				}
+				console.log(
+					'try nesting a level...',
+					nextIndex,
+					targetPosition
+				);
 			}
 			return;
 		}
