@@ -1,7 +1,7 @@
 /**
  * WordPress dependencies
  */
-import { check, moreVertical } from '@wordpress/icons';
+import { check, moreVertical, plus } from '@wordpress/icons';
 import { __ } from '@wordpress/i18n';
 
 /**
@@ -16,6 +16,7 @@ import { contextConnect } from '../../ui/context';
 const ToolsPanelHeader = ( props, forwardedRef ) => {
 	const {
 		hasMenuItems,
+		hasSelectedMenuItems,
 		label: labelText,
 		menuItems,
 		resetAll,
@@ -31,7 +32,7 @@ const ToolsPanelHeader = ( props, forwardedRef ) => {
 		<h2 { ...headerProps } ref={ forwardedRef }>
 			{ labelText }
 			{ hasMenuItems && (
-				<DropdownMenu icon={ moreVertical } label={ labelText }>
+				<DropdownMenu icon={ hasSelectedMenuItems ? moreVertical : plus } label={ labelText }>
 					{ ( { onClose } ) => (
 						<>
 							<MenuGroup label={ __( 'Display options' ) }>
