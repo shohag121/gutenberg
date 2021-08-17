@@ -87,6 +87,7 @@ export default function ListViewBlock( {
 		expand,
 	} = useListViewContext();
 
+	//TODO: handle block delete
 	useEffect( () => {
 		setPosition( listPosition, {
 			...{
@@ -175,9 +176,9 @@ export default function ListViewBlock( {
 		// When swapping items with a neighbor a positive translate value is moving down, and a
 		// negative value is moving up in the onViewportBoxUpdate callback.
 		//
-		// However, when skipping over items, we need mouse velocity to understand if the user is dragging up or down.
-		// This is because with the view box in the same position, the originPoint is modified and the translate value
-		// may flip it's sign.
+		// However, when skipping over items, we need mouse velocity to understand if the user is
+		// dragging up or down. This is because with the view box in the same position, the
+		// originPoint is modified and the translate value will flip its sign.
 		//
 		// Velocity is not available in onViewportBoxUpdate, so we set this motion value here:
 		velocity.set( info.velocity.y );
@@ -188,8 +189,7 @@ export default function ListViewBlock( {
 			moveItem( {
 				block,
 				translate: delta.y.translate,
-				isLastChild: position === rowCount,
-				isFirstChild: position === 1,
+				translateX: delta.x.translate,
 				velocity,
 				listPosition,
 			} );
@@ -211,7 +211,8 @@ export default function ListViewBlock( {
 			isExpanded={ isExpanded }
 			animate={ animate }
 			animateOnMount={ animateToggleOpen }
-			drag="y"
+			drag
+			dragConstraints={ { left: -10, right: 10 } }
 			whileDrag={ { scale: 1.1 } }
 			onDragStart={ onDragStart }
 			onDrag={ onDrag }
