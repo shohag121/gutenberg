@@ -7,8 +7,11 @@ import { clone } from 'lodash';
  * WordPress dependencies
  */
 
-import { useMergeRefs, useReducedMotion } from '@wordpress/compose';
-import { __experimentalTreeGrid as TreeGrid } from '@wordpress/components';
+import { useReducedMotion } from '@wordpress/compose';
+import {
+	__experimentalTreeGrid as TreeGrid,
+	__unstableUseMotionValue as useMotionValue,
+} from '@wordpress/components';
 import { useDispatch } from '@wordpress/data';
 import {
 	useCallback,
@@ -201,33 +204,44 @@ export default function ListView( {
 	);
 	const [ expandedState, setExpandedState ] = useReducer( expanded, {} );
 
-	const elementRef = useRef();
 	const timeoutRef = useRef();
-	const treeGridRef = useMergeRefs( [ elementRef, timeoutRef ] );
+	const treeGridRef = useRef();
 
 	const isMounted = useRef( false );
 	useEffect( () => {
 		isMounted.current = true;
 	}, [] );
 
-	const expand = ( clientId ) => {
-		if ( ! clientId ) {
-			return;
-		}
-		setExpandedState( { type: 'expand', clientId } );
-	};
-	const collapse = ( clientId ) => {
-		if ( ! clientId ) {
-			return;
-		}
-		setExpandedState( { type: 'collapse', clientId } );
-	};
-	const expandRow = ( row ) => {
-		expand( row?.dataset?.block );
-	};
-	const collapseRow = ( row ) => {
-		collapse( row?.dataset?.block );
-	};
+	const expand = useCallback(
+		( clientId ) => {
+			if ( ! clientId ) {
+				return;
+			}
+			setExpandedState( { type: 'expand', clientId } );
+		},
+		[ setExpandedState ]
+	);
+	const collapse = useCallback(
+		( clientId ) => {
+			if ( ! clientId ) {
+				return;
+			}
+			setExpandedState( { type: 'collapse', clientId } );
+		},
+		[ setExpandedState ]
+	);
+	const expandRow = useCallback(
+		( row ) => {
+			expand( row?.dataset?.block );
+		},
+		[ expand ]
+	);
+	const collapseRow = useCallback(
+		( row ) => {
+			collapse( row?.dataset?.block );
+		},
+		[ collapse ]
+	);
 
 	const animate = ! useReducedMotion();
 
@@ -236,23 +250,20 @@ export default function ListView( {
 	const setPosition = ( clientId, offset ) =>
 		( positions[ clientId ] = offset );
 
-	const lastTarget = useRef( null );
+	//avoid a react: re-render
+	const lastTarget = useMotionValue( null );
 	useEffect( () => {
-		lastTarget.current = null;
+		lastTarget.set( null );
 	}, [] );
 
 	const dropItem = async () => {
-		if ( ! lastTarget.current ) {
+		const target = lastTarget.get();
+		if ( ! target ) {
 			return;
 		}
 		setDropped( true );
-		const {
-			clientId,
-			originalParent,
-			targetId,
-			targetIndex,
-		} = lastTarget.current;
-		lastTarget.current = null;
+		const { clientId, originalParent, targetId, targetIndex } = target;
+		lastTarget.set( null );
 		await moveBlocksToPosition(
 			[ clientId ],
 			originalParent,
@@ -264,7 +275,6 @@ export default function ListView( {
 			setDropped( false );
 		}, 200 );
 	};
-
 	const moveItem = ( {
 		block,
 		translate,
@@ -326,7 +336,7 @@ export default function ListView( {
 			// so we can find a new parent container
 			if ( translateX < 0 ) {
 				// Insert after an item
-				if ( ! targetPosition.parentId || targetPosition.dropSibling ) {
+				if ( targetPosition.dropSibling ) {
 					const {
 						newTree: treeWithoutDragItem,
 						removeParentId,
@@ -337,12 +347,12 @@ export default function ListView( {
 						block,
 						direction === DOWN
 					);
-					lastTarget.current = {
+					lastTarget.set( {
 						clientId,
 						originalParent: removeParentId,
 						targetId,
 						targetIndex,
-					};
+					} );
 					setTree( newTree );
 					return;
 				} else if ( targetPosition.dropContainer ) {
@@ -356,12 +366,12 @@ export default function ListView( {
 						targetPosition.clientId,
 						block
 					);
-					lastTarget.current = {
+					lastTarget.set( {
 						clientId,
 						originalParent: removeParentId,
 						targetId: targetPosition.clientId,
 						targetIndex: 0,
-					};
+					} );
 					setTree( newTree );
 					return;
 				}
@@ -377,12 +387,12 @@ export default function ListView( {
 						targetPosition.clientId,
 						block
 					);
-					lastTarget.current = {
+					lastTarget.set( {
 						clientId,
 						originalParent: removeParentId,
 						targetId: targetPosition.clientId,
 						targetIndex: 0,
-					};
+					} );
 					setTree( newTree );
 					return;
 				}
