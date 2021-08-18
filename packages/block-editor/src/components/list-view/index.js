@@ -307,8 +307,6 @@ export default function ListView( {
 			return;
 		}
 
-		const position = positions[ listPosition ];
-
 		if ( Math.abs( translate ) < ITEM_HEIGHT / 2 ) {
 			//don't bother calculating anything if we haven't moved half a step.
 			return;
@@ -321,15 +319,14 @@ export default function ListView( {
 
 			const targetPosition = positions[ nextIndex ];
 
-			//TODO: if we move to the right or left as we drag, allow more freeform targeting
+			if ( ! targetPosition ) {
+				return;
+			}
+			// If we move to the right or left as we drag, allow more freeform targeting
 			// so we can find a new parent container
 			if ( translateX < 0 ) {
-				console.log(
-					'try breaking out a level...',
-					nextIndex,
-					targetPosition
-				);
-				if ( targetPosition && ! targetPosition.parentId ) {
+				// Insert after an item
+				if ( ! targetPosition.parentId || targetPosition.dropSibling ) {
 					const {
 						newTree: treeWithoutDragItem,
 						removeParentId,
@@ -348,9 +345,8 @@ export default function ListView( {
 					};
 					setTree( newTree );
 					return;
-				}
-			} else {
-				if ( targetPosition && targetPosition.dropContainer ) {
+				} else if ( targetPosition.dropContainer ) {
+					// Otherwise try inserting to a new parent (usually a level up).
 					const {
 						newTree: treeWithoutDragItem,
 						removeParentId,
@@ -369,11 +365,27 @@ export default function ListView( {
 					setTree( newTree );
 					return;
 				}
-				console.log(
-					'try nesting a level...',
-					nextIndex,
-					targetPosition
-				);
+			} else if ( translateX > 0 ) {
+				//When dragging right nest under a valid parent container
+				if ( targetPosition.dropContainer ) {
+					const {
+						newTree: treeWithoutDragItem,
+						removeParentId,
+					} = removeItemFromTree( clientIdsTree, clientId );
+					const newTree = addChildItemToTree(
+						treeWithoutDragItem,
+						targetPosition.clientId,
+						block
+					);
+					lastTarget.current = {
+						clientId,
+						originalParent: removeParentId,
+						targetId: targetPosition.clientId,
+						targetIndex: 0,
+					};
+					setTree( newTree );
+					return;
+				}
 			}
 			return;
 		}
@@ -389,7 +401,6 @@ export default function ListView( {
 			Math.abs( translate ) >
 				( ITEM_HEIGHT * Math.abs( listPosition - nextIndex ) ) / 2
 		) {
-			console.log( 'swap...' );
 			//Sibling swap
 			const {
 				newTree: treeWithoutDragItem,
@@ -408,9 +419,7 @@ export default function ListView( {
 				targetIndex,
 			};
 			setTree( newTree );
-			return;
 		}
-		console.log( 'fallthrough!...' );
 	};
 
 	const contextValue = useMemo(
