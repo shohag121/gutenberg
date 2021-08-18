@@ -301,15 +301,33 @@ export const __unstableGetClientIdsTree = createSelector(
  * Flat representation of blocks. This is useful when rendering the list view.
  */
 export const __unstableGetFlatList = createSelector(
-	( state, draggingId, parentId = '', level = 0 ) => {
+	(
+		state,
+		draggingId,
+		parentId = '',
+		level = 0,
+		[ flatList, match ] = [ [], null ]
+	) => {
 		let skipModifier = 0;
 		return getBlockOrder( state, parentId ).reduce(
-			( list, clientId, index ) => {
+			( [ list, submatch ], clientId, index ) => {
 				if ( draggingId === clientId ) {
 					skipModifier++;
-					return list;
+					return [
+						list,
+						{
+							clientId,
+							level,
+							parentId,
+							index,
+							listPosition: Math.max(
+								list.length,
+								flatList.length
+							),
+						},
+					];
 				}
-				return list.concat( [
+				const withItem = list.concat( [
 					{
 						clientId,
 						level,
@@ -326,15 +344,16 @@ export const __unstableGetFlatList = createSelector(
 							clientId
 						),
 					},
-					...__unstableGetFlatList(
-						state,
-						draggingId,
-						clientId,
-						level + 1
-					),
 				] );
+				return __unstableGetFlatList(
+					state,
+					draggingId,
+					clientId,
+					level + 1,
+					[ withItem, submatch || match ]
+				);
 			},
-			[]
+			[ flatList, match ]
 		);
 	},
 	( state, draggingId, parentId ) => [
