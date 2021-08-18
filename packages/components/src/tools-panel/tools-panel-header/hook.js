@@ -23,11 +23,14 @@ export function useToolsPanelHeader( props ) {
 	}, [ className ] );
 
 	const { menuItems } = useToolsPanelContext();
-	const hasMenuItems = !! Object.entries( menuItems ).length;
+	const menuItemsArray = Object.entries( menuItems );
+	const hasMenuItems = !! menuItemsArray.length;
+	const hasSelectedMenuItems = menuItemsArray.some( ( [ , isSelected ] ) => isSelected );
 
 	return {
 		...otherProps,
 		hasMenuItems,
+		hasSelectedMenuItems,
 		menuItems,
 		className: classes,
 	};
