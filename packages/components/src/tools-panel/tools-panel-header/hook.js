@@ -25,7 +25,9 @@ export function useToolsPanelHeader( props ) {
 	const { menuItems } = useToolsPanelContext();
 	const menuItemsArray = Object.entries( menuItems );
 	const hasMenuItems = !! menuItemsArray.length;
-	const hasSelectedMenuItems = menuItemsArray.some( ( [ , isSelected ] ) => isSelected );
+	const hasSelectedMenuItems = menuItemsArray.some(
+		( [ , isSelected ] ) => isSelected
+	);
 
 	return {
 		...otherProps,
