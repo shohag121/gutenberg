@@ -32,8 +32,7 @@ const useListViewSelectedClientIds = (
 const useListViewClientIdsTree = (
 	blocks,
 	selectedClientIds,
-	showOnlyCurrentHierarchy,
-	draggingId
+	showOnlyCurrentHierarchy
 ) =>
 	useSelect(
 		( select ) => {
@@ -50,14 +49,14 @@ const useListViewClientIdsTree = (
 			const isSingleBlockSelected =
 				selectedClientIds && ! Array.isArray( selectedClientIds );
 			if ( ! showOnlyCurrentHierarchy || ! isSingleBlockSelected ) {
-				return __unstableGetClientIdsTree( '', draggingId );
+				return __unstableGetClientIdsTree( '' );
 			}
 
 			const rootBlock = __unstableGetClientIdWithClientIdsTree(
 				getBlockHierarchyRootClientId( selectedClientIds )
 			);
 			if ( ! rootBlock ) {
-				return __unstableGetClientIdsTree( '', draggingId );
+				return __unstableGetClientIdsTree( '' );
 			}
 
 			const hasHierarchy =
@@ -67,9 +66,9 @@ const useListViewClientIdsTree = (
 				return [ rootBlock ];
 			}
 
-			return __unstableGetClientIdsTree( '', draggingId );
+			return __unstableGetClientIdsTree( '' );
 		},
-		[ blocks, selectedClientIds, showOnlyCurrentHierarchy, draggingId ]
+		[ blocks, selectedClientIds, showOnlyCurrentHierarchy ]
 	);
 
 export default function useListViewClientIds(

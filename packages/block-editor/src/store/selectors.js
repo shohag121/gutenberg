@@ -266,15 +266,11 @@ export const __unstableGetBlockTree = createSelector(
  * @return {Object} Client IDs of the post blocks.
  */
 export const __unstableGetClientIdWithClientIdsTree = createSelector(
-	( state, clientId, draggingId = false, dropSibling = false ) => ( {
+	( state, clientId ) => ( {
 		clientId,
-		...( draggingId && {
-			dropContainer: canInsertBlocks( state, [ draggingId ], clientId ),
-			dropSibling,
-		} ),
-		innerBlocks: __unstableGetClientIdsTree( state, clientId, draggingId ),
+		innerBlocks: __unstableGetClientIdsTree( state, clientId ),
 	} ),
-	( state, draggingId ) => [ state.blocks.order, draggingId ]
+	( state ) => [ state.blocks.order ]
 );
 
 /**
@@ -299,6 +295,53 @@ export const __unstableGetClientIdsTree = createSelector(
 			)
 		),
 	( state, draggingId ) => [ state.blocks.order, draggingId ]
+);
+
+/**
+ * Flat representation of blocks. This is useful when rendering the list view.
+ */
+export const __unstableGetFlatList = createSelector(
+	( state, draggingId, parentId = '', level = 0 ) => {
+		let skipModifier = 0;
+		return getBlockOrder( state, parentId ).reduce(
+			( list, clientId, index ) => {
+				if ( draggingId === clientId ) {
+					skipModifier++;
+					return list;
+				}
+				return list.concat( [
+					{
+						clientId,
+						level,
+						parentId,
+						index: index - skipModifier,
+						dragSibling: canInsertBlocks(
+							state,
+							[ draggingId ],
+							parentId
+						),
+						dragContainer: canInsertBlocks(
+							state,
+							[ draggingId ],
+							clientId
+						),
+					},
+					...__unstableGetFlatList(
+						state,
+						draggingId,
+						clientId,
+						level + 1
+					),
+				] );
+			},
+			[]
+		);
+	},
+	( state, draggingId, parentId ) => [
+		state.blocks.order,
+		draggingId,
+		parentId,
+	]
 );
 
 /**

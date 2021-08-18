@@ -45,11 +45,8 @@ export default function ListViewBlock( {
 	showBlockMovers,
 	isExpanded,
 	animateToggleOpen,
-	setPosition,
 	moveItem,
 	dropItem,
-	listPosition,
-	parentId,
 } ) {
 	const cellRef = useRef( null );
 	const [ isHovered, setIsHovered ] = useState( false );
@@ -86,18 +83,6 @@ export default function ListViewBlock( {
 		collapse,
 		expand,
 	} = useListViewContext();
-
-	//TODO: handle block delete
-	useEffect( () => {
-		setPosition( listPosition, {
-			...{
-				clientId,
-				dropContainer: block?.dropContainer ?? false,
-				dropSibling: block?.dropSibling ?? false,
-				parentId,
-			},
-		} );
-	}, [ listPosition, draggingId ] );
 
 	const listViewBlockSettingsClassName = classnames(
 		'block-editor-list-view-block__menu-cell',
@@ -160,7 +145,6 @@ export default function ListViewBlock( {
 
 	const onDragEnd = () => {
 		expand( clientId );
-		setDraggingId( null );
 		dropItem();
 	};
 
@@ -184,7 +168,6 @@ export default function ListViewBlock( {
 				translate: delta.y.translate,
 				translateX: delta.x.translate,
 				velocity,
-				listPosition,
 			} );
 		}
 	};
