@@ -277,7 +277,7 @@ export default function ListView( {
 		//TODO: simplify state and code
 		const { clientId } = block;
 		const ITEM_HEIGHT = 36;
-		const UPDATE_PARENT_THRESHOLD = 20;
+		const LEFT_RIGHT_DRAG_THRESHOLD = 20;
 
 		const v = velocity?.get() ?? 0;
 		if ( v === 0 ) {
@@ -312,7 +312,7 @@ export default function ListView( {
 			return;
 		}
 
-		if ( Math.abs( translateX ) > UPDATE_PARENT_THRESHOLD ) {
+		if ( Math.abs( translateX ) > LEFT_RIGHT_DRAG_THRESHOLD ) {
 			const steps = Math.ceil( Math.abs( translate / ITEM_HEIGHT ) );
 			const nextIndex =
 				direction === UP ? listPosition - steps : listPosition + steps;

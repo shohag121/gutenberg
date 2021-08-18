@@ -85,7 +85,6 @@ export default function ListViewBlock( {
 		setDraggingId,
 		collapse,
 		expand,
-		targetId,
 	} = useListViewContext();
 
 	//TODO: handle block delete
@@ -104,12 +103,6 @@ export default function ListViewBlock( {
 		'block-editor-list-view-block__menu-cell',
 		{ 'is-visible': isHovered }
 	);
-
-	const isFaded =
-		draggingId &&
-		draggingId !== clientId &&
-		block?.dropContainer === false &&
-		block?.dropSibling === false;
 
 	// If ListView has experimental features related to the Persistent List View,
 	// only focus the selected list item on mount; otherwise the list would always
@@ -157,7 +150,6 @@ export default function ListViewBlock( {
 		'is-last-of-selected-branch':
 			withExperimentalPersistentListViewFeatures &&
 			isLastOfSelectedBranch,
-		'is-faded': isFaded,
 		'is-moving': draggingId === clientId, //avoid is-dragging which has an !important rule
 	} );
 
