@@ -64,6 +64,13 @@
 		border-radius: 0 0 2px 2px;
 	}
 
+	&.is-drag-target-padding-top td {
+		padding-top: 36px;
+	}
+	&.is-drag-target-padding-bottom td {
+		padding-bottom: 36px;
+	}
+
 	.block-editor-list-view-block-contents {
 		display: flex;
 		align-items: center;

@@ -40,6 +40,7 @@ const expanded = ( state, action ) => {
 
 const UP = 'up';
 const DOWN = 'down';
+const EMPTY_LIST = [];
 
 function findFirstValidSibling( positions, current, velocity ) {
 	const iterate = velocity > 0 ? 1 : -1;
@@ -48,7 +49,7 @@ function findFirstValidSibling( positions, current, velocity ) {
 	while ( positions[ index ] !== undefined ) {
 		const position = positions[ index ];
 		if (
-			position.dropSibling &&
+			position.dragSibling &&
 			position.parentId === currentPosition.parentId
 		) {
 			return [ position, index ];
@@ -83,7 +84,8 @@ export default function ListView( {
 	...props
 } ) {
 	const [ draggingId, setDraggingId ] = useState( false );
-	const [ listPosition, setListPosition ] = useState( false );
+	const [ dragItem, setDragItem ] = useState( false );
+	const [ target, setTarget ] = useState( false );
 	const { clientIdsTree, selectedClientIds } = useListViewClientIds(
 		blocks,
 		showOnlyCurrentHierarchy,
@@ -95,7 +97,9 @@ export default function ListView( {
 			const { __unstableGetFlatList } = select( blockEditorStore );
 
 			return {
-				flatList: draggingId ? __unstableGetFlatList( draggingId ) : [],
+				flatList: draggingId
+					? __unstableGetFlatList( draggingId )
+					: EMPTY_LIST,
 			};
 		},
 		[ draggingId ]
@@ -158,6 +162,14 @@ export default function ListView( {
 		lastTarget.set( null );
 	}, [] );
 
+	useEffect( () => {
+		if ( draggingId && flatList.length === 2 ) {
+			setDragItem( flatList[ 1 ] );
+		} else {
+			setDragItem( false );
+		}
+	}, [ flatList, draggingId ] );
+
 	const dropItem = () => {
 		const target = lastTarget.get();
 		if ( ! target ) {
@@ -185,33 +197,43 @@ export default function ListView( {
 		}
 
 		const direction = v > 0 ? DOWN : UP;
+		const { listPosition } = dragItem;
+		const list = flatList?.[ 0 ];
+		const positions = [
+			...list.slice( 0, listPosition ),
+			dragItem,
+			...list.slice( listPosition, list.length ),
+		];
+		const draggingUpPastBounds =
+			listPosition > positions.length &&
+			direction === UP &&
+			translate > 0;
+		const draggingDownPastBounds =
+			listPosition === 0 && direction === DOWN && translate < 0;
 
-		// const draggingUpPastBounds =
-		// 	positions[ listPosition + 1 ] === undefined &&
-		// 	direction === UP &&
-		// 	translate > 0;
-		// const draggingDownPastBounds =
-		// 	listPosition === 0 && direction === DOWN && translate < 0;
-		//
-		// if ( draggingUpPastBounds || draggingDownPastBounds ) {
-		// 	// If we've dragged past all items with the first or last item, don't start checking for potential swaps
-		// 	// until we're near other items
-		// 	return;
-		// }
+		if ( draggingUpPastBounds || draggingDownPastBounds ) {
+			// If we've dragged past all items with the first or last item, don't start checking for potential swaps
+			// until we're near other items
+			console.log( 'dragging past bounds...' );
+			return;
+		}
 
-		// if (
-		// 	( direction === DOWN && translate < 0 ) ||
-		// 	( direction === UP && translate > 0 )
-		// ) {
-		// 	//We're skipping over multiple items, wait until user catches up to the new slot
-		// 	return;
-		// }
-		//
-		// if ( Math.abs( translate ) < ITEM_HEIGHT / 2 ) {
-		// 	//don't bother calculating anything if we haven't moved half a step.
-		// 	return;
-		// }
-		//
+		if (
+			( direction === DOWN && translate < 0 ) ||
+			( direction === UP && translate > 0 )
+		) {
+			//We're skipping over multiple items, wait until user catches up to the new slot
+			console.log( 'skipping over multiple items...' );
+			return;
+		}
+
+		console.log( translate );
+		if ( Math.abs( translate ) < ITEM_HEIGHT / 2 ) {
+			//don't bother calculating anything if we haven't moved half a step.
+			console.log( 'min threshold not reached...' );
+			return;
+		}
+
 		// if ( Math.abs( translateX ) > LEFT_RIGHT_DRAG_THRESHOLD ) {
 		// 	const steps = Math.ceil( Math.abs( translate / ITEM_HEIGHT ) );
 		// 	const nextIndex =
@@ -301,26 +323,18 @@ export default function ListView( {
 		// 	Math.abs( translate ) >
 		// 		( ITEM_HEIGHT * Math.abs( listPosition - nextIndex ) ) / 2
 		// ) {
-		//
-		// 	console.log({ targetPosition } );
+		// 	setTarget( {
+		// 		clientId: targetPosition.clientId,
+		// 		padding: direction === DOWN ? 'bottom' : 'top',
+		// 	} );
 		// 	//Sibling swap
-		// 	// const {
-		// 	// 	newTree: treeWithoutDragItem,
-		// 	// 	removeParentId,
-		// 	// } = removeItemFromTree( clientIdsTree, clientId );
-		// 	// const { newTree, targetIndex, targetId } = addItemToTree(
-		// 	// 	treeWithoutDragItem,
-		// 	// 	targetPosition.clientId,
-		// 	// 	block,
-		// 	// 	direction === DOWN
-		// 	// );
-		// 	// lastTarget.current = {
-		// 	// 	clientId,
-		// 	// 	originalParent: removeParentId,
-		// 	// 	targetId,
-		// 	// 	targetIndex,
-		// 	// };
-		// 	// setTree( newTree );
+		// 	lastTarget.current = {
+		// 		clientId: dragItem.clientId,
+		// 		originalParent: dragItem.parentId,
+		// 		targetId: targetPosition.clientId,
+		// 		targetIndex:
+		// 			targetPosition.index + ( direction === DOWN ? 1 : -1 ),
+		// 	};
 		// }
 	};
 
@@ -366,7 +380,7 @@ export default function ListView( {
 						selectedBlockClientIds={ selectedClientIds }
 						moveItem={ moveItem }
 						dropItem={ dropItem }
-						setListPosition={ setListPosition }
+						dragTargetBlock={ target }
 						{ ...props }
 					/>
 				</ListViewContext.Provider>

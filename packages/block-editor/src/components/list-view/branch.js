@@ -32,6 +32,7 @@ export default function ListViewBranch( props ) {
 		animateToggleOpen = false,
 		moveItem,
 		dropItem,
+		dragTargetBlock,
 	} = props;
 
 	const isTreeRoot = ! parentBlockClientId;
@@ -125,6 +126,7 @@ export default function ListViewBranch( props ) {
 							animateToggleOpen={ animateToggle }
 							moveItem={ moveItem }
 							dropItem={ dropItem }
+							dragTargetBlock={ dragTargetBlock }
 						/>
 						{ hasNestedBranch && isExpanded && (
 							<ListViewBranch
@@ -144,6 +146,7 @@ export default function ListViewBranch( props ) {
 								animateToggleOpen={ animateToggle }
 								moveItem={ moveItem }
 								dropItem={ dropItem }
+								dragTargetBlock={ dragTargetBlock }
 							/>
 						) }
 					</Fragment>

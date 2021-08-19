@@ -47,6 +47,7 @@ export default function ListViewBlock( {
 	animateToggleOpen,
 	moveItem,
 	dropItem,
+	dragTargetBlock,
 } ) {
 	const cellRef = useRef( null );
 	const [ isHovered, setIsHovered ] = useState( false );
@@ -136,6 +137,12 @@ export default function ListViewBlock( {
 			withExperimentalPersistentListViewFeatures &&
 			isLastOfSelectedBranch,
 		'is-moving': draggingId === clientId, //avoid is-dragging which has an !important rule
+		'is-drag-target-padding-top':
+			dragTargetBlock.clientId === clientId &&
+			dragTargetBlock.padding === 'top',
+		'is-drag-target-padding-bottom':
+			dragTargetBlock.clientId === clientId &&
+			dragTargetBlock.padding === 'bottom',
 	} );
 
 	const onDragStart = () => {
@@ -144,8 +151,9 @@ export default function ListViewBlock( {
 	};
 
 	const onDragEnd = () => {
-		expand( clientId );
 		dropItem();
+		setDraggingId( null );
+		expand( clientId );
 	};
 
 	const velocity = useMotionValue( 0 );
