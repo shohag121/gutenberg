@@ -52,6 +52,7 @@ const expanded = ( state, action ) => {
  * present at the very top of the navigation grid.
  *
  * @param {Object}   props                                          Components props.
+ * @param {string}   props.rootId                                   Parent id of blocks. Defaults to '' as root.
  * @param {Array}    props.blocks                                   Custom subset of block client IDs to be used
  *                                                                  instead of the default hierarchy.
  * @param {Function} props.onSelect                                 Block selection callback.
@@ -65,6 +66,7 @@ const expanded = ( state, action ) => {
  */
 function ListView(
 	{
+		rootId = '',
 		blocks,
 		showOnlyCurrentHierarchy,
 		onSelect = noop,
@@ -253,7 +255,7 @@ function ListView(
 				const {
 					newTree: treeWithoutDragItem,
 					removeParentId,
-				} = removeItemFromTree( clientIdsTree, clientId );
+				} = removeItemFromTree( clientIdsTree, clientId, rootId );
 				const { newTree, targetIndex, targetId } = addItemToTree(
 					treeWithoutDragItem,
 					targetPosition.clientId,
@@ -261,7 +263,8 @@ function ListView(
 					direction === DOWN ||
 						( direction === UP &&
 							targetPosition.isLastChild &&
-							! targetPosition.dropContainer )
+							! targetPosition.dropContainer ),
+					rootId
 				);
 				lastTarget.current = {
 					clientId,
@@ -282,7 +285,7 @@ function ListView(
 				const {
 					newTree: treeWithoutDragItem,
 					removeParentId,
-				} = removeItemFromTree( clientIdsTree, clientId );
+				} = removeItemFromTree( clientIdsTree, clientId, rootId );
 				const newTree = addChildItemToTree(
 					treeWithoutDragItem,
 					targetPosition.clientId,
@@ -315,12 +318,13 @@ function ListView(
 			const {
 				newTree: treeWithoutDragItem,
 				removeParentId,
-			} = removeItemFromTree( clientIdsTree, clientId );
+			} = removeItemFromTree( clientIdsTree, clientId, rootId );
 			const { newTree, targetIndex, targetId } = addItemToTree(
 				treeWithoutDragItem,
 				targetPosition.clientId,
 				block,
-				direction === DOWN
+				direction === DOWN,
+				rootId
 			);
 			lastTarget.current = {
 				clientId,
@@ -374,6 +378,7 @@ function ListView(
 								? tree
 								: clientIdsTree
 						}
+						parentBlockClientId={ rootId }
 						selectBlock={ selectEditorBlock }
 						selectedBlockClientIds={ selectedClientIds }
 						setPosition={ setPosition }
