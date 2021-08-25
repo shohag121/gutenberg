@@ -38,8 +38,8 @@
 	}
 	&.is-moving {
 		z-index: 1;
-		background: var(--wp-admin-theme-color);
 	}
+
 	&.is-moving .block-editor-list-view-block-contents:focus {
 		box-shadow: none;
 	}
