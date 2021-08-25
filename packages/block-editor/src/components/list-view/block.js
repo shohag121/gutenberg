@@ -57,11 +57,11 @@ function ListViewBlock( {
 	animateToggleOpen,
 	setPosition,
 	moveItem,
-	dropItem,
 	listPosition,
 	parentId,
 	draggingId,
-	setDraggingId,
+	dragStart,
+	dragEnd,
 } ) {
 	const cellRef = useRef( null );
 	const [ isHovered, setIsHovered ] = useState( false );
@@ -71,8 +71,6 @@ function ListViewBlock( {
 		__experimentalPersistentListViewFeatures: withExperimentalPersistentListViewFeatures,
 		isTreeGridMounted,
 		useAnimation,
-		collapse,
-		expand,
 	} = useListViewContext();
 
 	const { blockParents, dropContainer, dropSibling } = useSelect(
@@ -183,17 +181,6 @@ function ListViewBlock( {
 		'is-moving': draggingId === clientId, //avoid is-dragging which has an !important rule
 	} );
 
-	const onDragStart = () => {
-		setDraggingId( clientId );
-		collapse( clientId );
-	};
-
-	const onDragEnd = () => {
-		dropItem();
-		setDraggingId( null );
-		expand( clientId );
-	};
-
 	const velocity = useMotionValue( 0 );
 	const onDrag = ( event, info ) => {
 		// When swapping items with a neighbor a positive translate value is moving down, and a
@@ -226,9 +213,9 @@ function ListViewBlock( {
 				initial: animateToggleOpen ? 'init' : false,
 				drag: true,
 				dragConstraints: DRAG_CONSTANTS,
-				onDragStart,
+				onDragStart: dragStart,
 				onDrag,
-				onDragEnd,
+				onDragEnd: dragEnd,
 				onViewportBoxUpdate: blockDrag,
 				layoutId: `list-view-block-${ clientId }`,
 		  }

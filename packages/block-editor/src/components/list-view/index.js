@@ -170,21 +170,39 @@ function ListView(
 	// Used in dragging to specify a drop target
 	const lastTarget = useRef( null );
 
+	const dragStart = ( clientId ) => {
+		if ( ! draggingId && stateType === GLOBAL ) {
+			setDraggingId( clientId );
+			collapse( clientId );
+		}
+	};
+
+	const dragEnd = ( clientId ) => {
+		dropItem();
+		setDraggingId( null );
+		expand( clientId );
+	};
+
 	// Fired on item drop
 	const dropItem = async () => {
 		const target = lastTarget.current;
 		if ( ! target ) {
+			setStateType( GLOBAL );
 			return;
 		}
 		const { clientId, originalParent, targetId, targetIndex } = target;
 		lastTarget.current = null;
-		await moveBlocksToPosition(
-			[ clientId ],
-			originalParent,
-			targetId,
-			targetIndex
-		);
-		setStateType( RESOLVING_DROP );
+		try {
+			await moveBlocksToPosition(
+				[ clientId ],
+				originalParent,
+				targetId,
+				targetIndex
+			);
+			setStateType( RESOLVING_DROP );
+		} catch ( e ) {
+			setStateType( GLOBAL );
+		}
 	};
 	// Note that this is fired on onViewportBoxUpdate instead of onDrag.
 	const moveItem = ( {
@@ -383,9 +401,9 @@ function ListView(
 						selectedBlockClientIds={ selectedClientIds }
 						setPosition={ setPosition }
 						moveItem={ moveItem }
-						dropItem={ dropItem }
 						draggingId={ draggingId }
-						setDraggingId={ setDraggingId }
+						dragStart={ dragStart }
+						dragEnd={ dragEnd }
 						{ ...props }
 					/>
 				</ListViewContext.Provider>

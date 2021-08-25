@@ -47,10 +47,10 @@ export default function ListViewBranch( props ) {
 		animateToggleOpen = false,
 		setPosition,
 		moveItem,
-		dropItem,
 		listPosition = 0,
 		draggingId,
-		setDraggingId,
+		dragStart,
+		dragEnd,
 	} = props;
 
 	const isTreeRoot = ! parentBlockClientId;
@@ -152,11 +152,11 @@ export default function ListViewBranch( props ) {
 							animateToggleOpen={ animateToggle }
 							setPosition={ setPosition }
 							moveItem={ moveItem }
-							dropItem={ dropItem }
 							listPosition={ nextPosition }
 							parentId={ parentBlockClientId }
 							draggingId={ draggingId }
-							setDraggingId={ setDraggingId }
+							dragStart={ () => dragStart( clientId ) }
+							dragEnd={ () => dragEnd( clientId ) }
 						/>
 						{ hasNestedBranch && isExpanded && (
 							<ListViewBranch
@@ -176,10 +176,10 @@ export default function ListViewBranch( props ) {
 								animateToggleOpen={ animateToggle }
 								setPosition={ setPosition }
 								moveItem={ moveItem }
-								dropItem={ dropItem }
 								listPosition={ nextPosition + 1 }
 								draggingId={ draggingId }
-								setDraggingId={ setDraggingId }
+								dragStart={ dragStart }
+								dragEnd={ dragEnd }
 							/>
 						) }
 					</Fragment>
