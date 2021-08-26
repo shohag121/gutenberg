@@ -295,12 +295,25 @@ $block-navigation-max-indent: 7;
 }
 
 
-.block-editor-list-view-tree.supports-animation {
-	.block-editor-list-view-leaf button {
+.block-editor-list-view-tree.supports-animation .block-editor-list-view-leaf {
+
+	& button {
 		cursor: grab;
 	}
-	.block-editor-list-view-leaf button:active,
-	.block-editor-list-view-leaf.is-moving button {
+	& button:active,
+	&.is-moving button {
+		cursor: grabbing;
+	}
+
+	& .block-editor-list-view__expander,
+	& .block-editor-list-view-block-select-button__title,
+	& .block-editor-block-icon {
+		cursor: pointer;
+	}
+
+	&.is-moving .block-editor-list-view__expander,
+	&.is-moving .block-editor-list-view-block-select-button__title,
+	&.is-moving .block-editor-block-icon {
 		cursor: grabbing;
 	}
 }
