@@ -31,6 +31,25 @@ export const isClientIdSelected = ( clientId, selectedBlockClientIds ) =>
 		? selectedBlockClientIds.indexOf( clientId ) !== -1
 		: selectedBlockClientIds === clientId;
 
+/**
+ * A slimmed down representation of a block.
+ *
+ * @typedef {Object} WPListViewBlock
+ *
+ * @property { string }            clientId    block clientId
+ * @property { WPListViewBlock[] } innerBlocks any nested child blocks
+ */
+
+/**
+ * Returns a new tree and the affected parentId with the matching block removed. This does not mutate
+ * the passed tree.
+ *
+ * @param { WPListViewBlock[] } tree       The current block tree to deep copy
+ * @param { string }            id         Block clientId to remove
+ * @param { string }            [parentId] The current parent id for a given level. Root is ''
+ *
+ * @return { { newTree: WPListViewBlock[], removeParentId: string } }  Return a new tree with the block removed and the affected parentId.
+ */
 export function removeItemFromTree( tree, id, parentId = '' ) {
 	const newTree = [];
 	let removeParentId = '';
@@ -57,7 +76,17 @@ export function removeItemFromTree( tree, id, parentId = '' ) {
 	}
 	return { newTree, removeParentId };
 }
-
+/**
+ * Returns a new tree with a block added as a sibling to the target id. This does not mutate the passed tree.
+ *
+ * @param { WPListViewBlock[] } tree          The current block tree to deep copy
+ * @param { string }            id            Block clientId to add a sibling block to
+ * @param { WPListViewBlock }   item          Block to add
+ * @param { boolean }           [insertAfter] If we should insert the block before or after the target block.
+ * @param { string }            [parentId]    The current parent id for a given level. Root is ''
+ *
+ * @return { { newTree: WPListViewBlock[], targetId: string, targetIndex: number } }  Return a new tree with the item added and the affected parentId and index.
+ */
 export function addItemToTree(
 	tree,
 	id,
@@ -108,6 +137,15 @@ export function addItemToTree(
 	return { newTree, targetId, targetIndex };
 }
 
+/**
+ * Returns a new tree with a block added as a child to the target id. This does not mutate the passed tree.
+ *
+ * @param { WPListViewBlock[] } tree The current block tree to deep copy
+ * @param { string }            id   Block clientId to add a child block to
+ * @param { WPListViewBlock }   item Block to add
+ *
+ * @return { WPListViewBlock[] }  Returns a new tree with the child item added
+ */
 export function addChildItemToTree( tree, id, item ) {
 	const newTree = [];
 	for ( let index = 0; index < tree.length; index++ ) {
@@ -133,6 +171,27 @@ export function addChildItemToTree( tree, id, item ) {
 	return newTree;
 }
 
+/**
+ * Block information used for determining drag targets. This is set in block.js
+ *
+ * @typedef {Object} WPListViewPosition
+ *
+ * @property { string }  clientId      block clientId
+ * @property { boolean } dropContainer true, if the currently dragged item may be added as a child
+ * @property { boolean } dropSibling   true, if the currently dragged item may be added as a sibling
+ * @property { string }  parentId      parent clientId
+ * @property { boolean } isLastChild   true, if block is last item of innerBlocks
+ */
+
+/**
+ * Returns the first valid sibling of the currently dragged item if we can find if any.
+ *
+ * @param { Object.< number, WPListViewPosition > } positions
+ * @param { number }                                current   the flat list index of the dragged item
+ * @param { number }                                velocity  mouse velocity
+ *
+ * @return { [ WPListViewPosition | null , number | null ] }  The first valid sibling position and index.
+ */
 export function findFirstValidSibling( positions, current, velocity ) {
 	const iterate = velocity > 0 ? 1 : -1;
 	let index = current + iterate;

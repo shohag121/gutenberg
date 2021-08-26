@@ -136,11 +136,16 @@ function ListView(
 
 	// Dragging Support
 	//
-	// To support in-place item swapping when dragging, we switch to LOCAL state to represent the current block tree.
-	// Initial value is GLOBAL.This is set to LOCAL on dragStart, RESOLVING_DROP on drop, and back to GLOBAL when we
-	// detect clientIdsTree has resolved from the drop action.
+	// To support in-place item swapping when dragging, we use local component state by deep copying the client ids tree
+	// and manipulating it. We still do want to listen to global updates, so we only use local component state while
+	// dragging. To facilitate what the component is driven by, we use stateType which has three states, and transitions
+	// between them in the following way:
 	//
-	// RESOLVING_DROP is necessary, otherwise, we'll see valid moves animating items jumping from it's dropped position
+	// GLOBAL         ----------(drag start)----------> LOCAL
+	// LOCAL          -------------(drop)-------------> RESOLVING_DROP
+	// RESOLVING_DROP --(error/clientIdTrees update)--> GLOBAL
+	//
+	// Note that a RESOLVING_DROP state is necessary. Otherwise, we'll see valid moves jumping from it's dropped position
 	// to its old position and back to its dropped position.
 	const LOCAL = 'local';
 	const RESOLVING_DROP = 'resolving-drop';
