@@ -42,6 +42,8 @@ export default function ListViewBranch( props ) {
 		parentBlockClientId,
 		level = 1,
 		terminatedLevels = [],
+		isBranchSelected = false,
+		isLastOfBranch = false,
 		animateToggleOpen = false,
 		setPosition,
 		moveItem,
@@ -91,6 +93,16 @@ export default function ListViewBranch( props ) {
 					clientId,
 					selectedBlockClientIds
 				);
+				const isSelectedBranch =
+					isBranchSelected || ( isSelected && hasNestedBranch );
+
+				// Logic needed to target the last item of a selected branch which might be deeply nested.
+				// This is currently only needed for styling purposes. See: `.is-last-of-selected-branch`.
+				const isLastBlock = index === blockCount - 1;
+				const isLast = isSelected || ( isLastOfBranch && isLastBlock );
+				const isLastOfSelectedBranch =
+					isLastOfBranch && ! hasNestedBranch && isLastBlock;
+
 				const isExpanded = hasNestedBranch
 					? expandedState[ clientId ] ?? true
 					: undefined;
@@ -128,6 +140,8 @@ export default function ListViewBranch( props ) {
 							onClick={ selectBlockWithClientId }
 							onToggleExpanded={ toggleExpanded }
 							isSelected={ isSelected }
+							isBranchSelected={ isSelectedBranch }
+							isLastOfSelectedBranch={ isLastOfSelectedBranch }
 							level={ level }
 							position={ position }
 							rowCount={ rowCount }
@@ -150,6 +164,8 @@ export default function ListViewBranch( props ) {
 									selectedBlockClientIds
 								}
 								selectBlock={ selectBlock }
+								isBranchSelected={ isSelectedBranch }
+								isLastOfBranch={ isLast }
 								showAppender={ showAppender }
 								showBlockMovers={ showBlockMovers }
 								showNestedBlocks={ showNestedBlocks }

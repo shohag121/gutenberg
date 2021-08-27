@@ -44,6 +44,8 @@ const DRAG_CONSTANTS = { left: -10, right: 10 };
 function ListViewBlock( {
 	block,
 	isSelected,
+	isBranchSelected,
+	isLastOfSelectedBranch,
 	onClick,
 	onToggleExpanded,
 	position,
@@ -171,6 +173,11 @@ function ListViewBlock( {
 	const classes = classnames( {
 		'block-editor-list-view-leaf': true,
 		'is-selected': isSelected,
+		'is-branch-selected':
+			withExperimentalPersistentListViewFeatures && isBranchSelected,
+		'is-last-of-selected-branch':
+			withExperimentalPersistentListViewFeatures &&
+			isLastOfSelectedBranch,
 		'is-moving': draggingId === clientId, //avoid is-dragging which has an !important rule
 	} );
 
