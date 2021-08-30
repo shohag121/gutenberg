@@ -206,21 +206,6 @@ function ListViewBlock( {
 		}
 	};
 
-	const animationProps = useAnimation
-		? {
-				variants: ROW_VARIANTS,
-				animate: 'open',
-				initial: animateToggleOpen ? 'init' : false,
-				drag: true,
-				dragConstraints: DRAG_CONSTANTS,
-				onDragStart: dragStart,
-				onDrag,
-				onDragEnd: dragEnd,
-				onViewportBoxUpdate: blockDrag,
-				layoutId: `list-view-block-${ clientId }`,
-		  }
-		: {};
-
 	return (
 		<TreeGridRow
 			className={ classes }
@@ -235,7 +220,16 @@ function ListViewBlock( {
 			data-block={ clientId }
 			isExpanded={ isExpanded }
 			useAnimation={ useAnimation }
-			{ ...animationProps }
+			variants={ ROW_VARIANTS }
+			animate="open"
+			initial={ useAnimation && animateToggleOpen ? 'init' : false }
+			drag
+			dragConstraints={ DRAG_CONSTANTS }
+			onDragStart={ dragStart }
+			onDrag={ onDrag }
+			onDragEnd={ dragEnd }
+			onViewportBoxUpdate={ blockDrag }
+			layoutId={ `list-view-block-${ clientId }` }
 		>
 			<TreeGridCell
 				className="block-editor-list-view-block__contents-cell"

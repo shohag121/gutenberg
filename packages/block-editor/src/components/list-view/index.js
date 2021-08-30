@@ -1,9 +1,4 @@
 /**
- * External dependencies
- */
-import classnames from 'classnames';
-
-/**
  * WordPress dependencies
  */
 import { useReducedMotion } from '@wordpress/compose';
@@ -131,7 +126,7 @@ function ListView(
 		[ collapse ]
 	);
 
-	// All animations and dragging should be disabled when folks prefer reduced motion.
+	// Layout animations should be disabled when folks prefer reduced motion.
 	const useAnimation = ! useReducedMotion();
 
 	// Dragging Support
@@ -380,14 +375,10 @@ function ListView(
 		]
 	);
 
-	const listViewClassnames = classnames( 'block-editor-list-view-tree', {
-		'supports-animation': useAnimation,
-	} );
-
 	return (
 		<>
 			<TreeGrid
-				className={ listViewClassnames }
+				className="block-editor-list-view-tree"
 				aria-label={ __( 'Block navigation structure' ) }
 				ref={ ref }
 				onCollapseRow={ collapseRow }
