@@ -11,7 +11,8 @@ import { isClientIdSelected } from './utils';
 import { store as blockEditorStore } from '../../store';
 
 const useListViewSelectedClientIds = (
-	__experimentalPersistentListViewFeatures
+	__experimentalPersistentListViewFeatures,
+	blockCount
 ) =>
 	useSelect(
 		( select ) => {
@@ -26,13 +27,14 @@ const useListViewSelectedClientIds = (
 
 			return getSelectedBlockClientId();
 		},
-		[ __experimentalPersistentListViewFeatures ]
+		[ __experimentalPersistentListViewFeatures, blockCount ]
 	);
 
 const useListViewClientIdsTree = (
 	blocks,
 	selectedClientIds,
-	showOnlyCurrentHierarchy
+	showOnlyCurrentHierarchy,
+	blockCount
 ) =>
 	useSelect(
 		( select ) => {
@@ -68,21 +70,24 @@ const useListViewClientIdsTree = (
 
 			return __unstableGetClientIdsTree();
 		},
-		[ blocks, selectedClientIds, showOnlyCurrentHierarchy ]
+		[ blocks, selectedClientIds, showOnlyCurrentHierarchy, blockCount ]
 	);
 
 export default function useListViewClientIds(
 	blocks,
 	showOnlyCurrentHierarchy,
-	__experimentalPersistentListViewFeatures
+	__experimentalPersistentListViewFeatures,
+	blockCount
 ) {
 	const selectedClientIds = useListViewSelectedClientIds(
-		__experimentalPersistentListViewFeatures
+		__experimentalPersistentListViewFeatures,
+		blockCount
 	);
 	const clientIdsTree = useListViewClientIdsTree(
 		blocks,
 		selectedClientIds,
-		showOnlyCurrentHierarchy
+		showOnlyCurrentHierarchy,
+		blockCount
 	);
 	return { clientIdsTree, selectedClientIds };
 }

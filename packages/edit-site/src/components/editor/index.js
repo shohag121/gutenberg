@@ -10,7 +10,11 @@ import {
 	Notice,
 } from '@wordpress/components';
 import { EntityProvider, store as coreStore } from '@wordpress/core-data';
-import { BlockContextProvider, BlockBreadcrumb } from '@wordpress/block-editor';
+import {
+	BlockContextProvider,
+	BlockBreadcrumb,
+	store as blockEditorStore,
+} from '@wordpress/block-editor';
 import {
 	FullscreenMode,
 	InterfaceSkeleton,
@@ -48,6 +52,13 @@ const interfaceLabels = {
 };
 
 function Editor( { initialSettings, onError } ) {
+	//Force list view to render if block count has changed
+	const { blockCount } = useSelect( ( select ) => {
+		const { getGlobalBlockCount } = select( blockEditorStore );
+		return {
+			blockCount: getGlobalBlockCount(),
+		};
+	} );
 	const {
 		isInserterOpen,
 		isListViewOpen,
@@ -170,7 +181,7 @@ function Editor( { initialSettings, onError } ) {
 		if ( isListViewOpen ) {
 			return (
 				<AsyncModeProvider value="true">
-					<ListViewSidebar />
+					<ListViewSidebar blockCount={ blockCount } />
 				</AsyncModeProvider>
 			);
 		}

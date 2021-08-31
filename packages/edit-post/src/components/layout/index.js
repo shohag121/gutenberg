@@ -16,7 +16,10 @@ import {
 	store as editorStore,
 } from '@wordpress/editor';
 import { AsyncModeProvider, useSelect, useDispatch } from '@wordpress/data';
-import { BlockBreadcrumb } from '@wordpress/block-editor';
+import {
+	BlockBreadcrumb,
+	store as blockEditorStore,
+} from '@wordpress/block-editor';
 import { Button, ScrollLock, Popover } from '@wordpress/components';
 import { useViewportMatch } from '@wordpress/compose';
 import { PluginArea } from '@wordpress/plugins';
@@ -170,6 +173,14 @@ function Layout( { styles } ) {
 		[ entitiesSavedStatesCallback ]
 	);
 
+	//Force list view to render if block count has changed
+	const { blockCount } = useSelect( ( select ) => {
+		const { getGlobalBlockCount } = select( blockEditorStore );
+		return {
+			blockCount: getGlobalBlockCount(),
+		};
+	} );
+
 	const secondarySidebar = () => {
 		if ( mode === 'visual' && isInserterOpened ) {
 			return <InserterSidebar />;
@@ -177,7 +188,7 @@ function Layout( { styles } ) {
 		if ( mode === 'visual' && isListViewOpened ) {
 			return (
 				<AsyncModeProvider value="true">
-					<ListViewSidebar />
+					<ListViewSidebar blockCount={ blockCount } />
 				</AsyncModeProvider>
 			);
 		}

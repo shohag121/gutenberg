@@ -51,6 +51,7 @@ const expanded = ( state, action ) => {
  * @param {Array}    props.blocks                                   Custom subset of block client IDs to be used
  *                                                                  instead of the default hierarchy.
  * @param {Function} props.onSelect                                 Block selection callback.
+ * @param {number}   props.blockCount                               Block Count
  * @param {boolean}  props.showNestedBlocks                         Flag to enable displaying nested blocks.
  * @param {boolean}  props.showOnlyCurrentHierarchy                 Flag to limit the list to the current hierarchy of
  *                                                                  blocks.
@@ -65,6 +66,7 @@ function ListView(
 		blocks,
 		showOnlyCurrentHierarchy,
 		onSelect = noop,
+		blockCount = blocks.length,
 		__experimentalFeatures,
 		__experimentalPersistentListViewFeatures,
 		...props
@@ -74,7 +76,8 @@ function ListView(
 	const { clientIdsTree, selectedClientIds } = useListViewClientIds(
 		blocks,
 		showOnlyCurrentHierarchy,
-		__experimentalPersistentListViewFeatures
+		__experimentalPersistentListViewFeatures,
+		blockCount
 	);
 	const { selectBlock, moveBlocksToPosition } = useDispatch(
 		blockEditorStore

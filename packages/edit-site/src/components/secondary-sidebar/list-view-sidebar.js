@@ -23,7 +23,7 @@ import { ESCAPE } from '@wordpress/keycodes';
  */
 import { store as editSiteStore } from '../../store';
 
-function ListViewSidebar() {
+function ListViewSidebar( blockCount ) {
 	const { setIsListViewOpened } = useDispatch( editSiteStore );
 
 	const { clearSelectedBlock, selectBlock } = useDispatch( blockEditorStore );
@@ -65,6 +65,7 @@ function ListViewSidebar() {
 				<ListView
 					onSelect={ selectEditorBlock }
 					showNestedBlocks
+					blockCount={ blockCount }
 					__experimentalPersistentListViewFeatures
 				/>
 			</div>
