@@ -129,7 +129,7 @@ export function useClipboardHandler() {
 
 			if ( event.type === 'cut' ) {
 				removeBlocks( selectedBlockClientIds );
-			} else if ( event.type === 'paste' ) {
+			} else if ( event.type === 'paste' && hasMultiSelection() ) {
 				const {
 					__experimentalCanUserUseUnfilteredHTML: canUserUseUnfilteredHTML,
 				} = getSettings();
