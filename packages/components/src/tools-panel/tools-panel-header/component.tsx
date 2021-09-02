@@ -17,11 +17,11 @@ import DropdownMenu from '../../dropdown-menu';
 import MenuGroup from '../../menu-group';
 import MenuItem from '../../menu-item';
 import { useToolsPanelHeader } from './hook';
-import { contextConnect, PolymorphicComponentProps } from '../../ui/context';
+import { contextConnect, WordPressComponentProps } from '../../ui/context';
 import type { ToolsPanelHeaderProps } from '../types';
 
 const ToolsPanelHeader = (
-	props: PolymorphicComponentProps< ToolsPanelHeaderProps, 'h2' >,
+	props: WordPressComponentProps< ToolsPanelHeaderProps, 'h2' >,
 	forwardedRef: Ref< any >
 ) => {
 	const {

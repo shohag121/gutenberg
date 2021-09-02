@@ -7,12 +7,12 @@ import { useEffect, useMemo, useState } from '@wordpress/element';
  * Internal dependencies
  */
 import * as styles from '../styles';
-import { useContextSystem, PolymorphicComponentProps } from '../../ui/context';
+import { useContextSystem, WordPressComponentProps } from '../../ui/context';
 import { useCx } from '../../utils/hooks/use-cx';
 import type { ToolsPanelProps, ToolsPanelItem } from '../types';
 
 export function useToolsPanel(
-	props: PolymorphicComponentProps< ToolsPanelProps, 'div' >
+	props: WordPressComponentProps< ToolsPanelProps, 'div' >
 ) {
 	const { className, resetAll, ...otherProps } = useContextSystem(
 		props,
