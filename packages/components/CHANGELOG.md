@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Breaking changes
+
+- Removed the deprecated position and menuLable from the DropdownMenu component.
+- Removed the deprecated onClickOutside prop from the Popover component.
 ### Bug Fix
 
 -   Fixed RTL styles in `Flex` component ([#33729](https://github.com/WordPress/gutenberg/pull/33729)).
