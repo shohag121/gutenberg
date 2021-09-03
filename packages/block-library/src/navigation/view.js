@@ -20,8 +20,11 @@ function navigationToggleModal( modal ) {
 	htmlElement.classList.toggle( 'has-modal-open' );
 }
 
-MicroModal.init( {
-	onShow: navigationToggleModal,
-	onClose: navigationToggleModal,
-	openClass: 'is-menu-open',
-} );
+// Necessary for some themes such as TT1 Blocks, where
+// scripts could be loaded before the body.
+window.onload = () =>
+	MicroModal.init( {
+		onShow: navigationToggleModal,
+		onClose: navigationToggleModal,
+		openClass: 'is-menu-open',
+	} );
