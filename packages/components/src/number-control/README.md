@@ -99,8 +99,8 @@ Amount to increment by when the `SHIFT` key is held down. This shift value is a 
 
 ### step
 
-Amount to increment by when incrementing/decrementing.
+Amount by which the `value` is changed when incrementing/decrementing. It is also a factor in validation as `value` must be a multiple of `step` (offset by `min`, if specified) to be valid. Accepts the special string value `any` that voids the validation constraint and causes stepping actions to increment/decrement by `1`.
 
--   Type: `Number`
+-   Type: `number | "any"`
 -   Required: No
 -   Default: `1`
