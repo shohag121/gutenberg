@@ -24,7 +24,11 @@ import {
 import { HStack } from '../../h-stack';
 import Button from '../../button';
 import { Spacer } from '../../spacer';
-import { ColorfulWrapper, SelectControl, AuxiliaryColorArtefactWrapper } from './styles';
+import {
+	ColorfulWrapper,
+	SelectControl,
+	AuxiliaryColorArtefactWrapper,
+} from './styles';
 import { ColorDisplay } from './color-display';
 import { ColorInput } from './color-input';
 import { Picker } from './picker';
@@ -97,34 +101,34 @@ const ColorPicker = (
 			/>
 			<AuxiliaryColorArtefactWrapper>
 				<HStack justify="space-between">
-				{ showInputs ? (
-					<SelectControl
-						options={ options }
-						value={ colorType }
-						onChange={ ( nextColorType ) =>
-							setColorType( nextColorType as ColorType )
+					{ showInputs ? (
+						<SelectControl
+							options={ options }
+							value={ colorType }
+							onChange={ ( nextColorType ) =>
+								setColorType( nextColorType as ColorType )
+							}
+							label={ __( 'Color format' ) }
+							hideLabelFromVision
+						/>
+					) : (
+						<ColorDisplay
+							color={ safeColor }
+							colorType={ copyFormat || colorType }
+							enableAlpha={ enableAlpha }
+						/>
+					) }
+					<Button
+						onClick={ () => setShowInputs( ! showInputs ) }
+						icon={ settings }
+						isPressed={ showInputs }
+						label={
+							showInputs
+								? __( 'Hide detailed inputs' )
+								: __( 'Show detailed inputs' )
 						}
-						label={ __( 'Color format' ) }
-						hideLabelFromVision
 					/>
-				) : (
-					<ColorDisplay
-						color={ safeColor }
-						colorType={ copyFormat || colorType }
-						enableAlpha={ enableAlpha }
-					/>
-				) }
-				<Button
-					onClick={ () => setShowInputs( ! showInputs ) }
-					icon={ settings }
-					isPressed={ showInputs }
-					label={
-						showInputs
-							? __( 'Hide detailed inputs' )
-							: __( 'Show detailed inputs' )
-					}
-				/>
-			</HStack>
+				</HStack>
 				<Spacer margin={ 4 } />
 				{ showInputs && (
 					<ColorInput
