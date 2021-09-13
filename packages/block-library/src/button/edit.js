@@ -200,19 +200,20 @@ function ButtonEdit( props ) {
 				/>
 			</div>
 			<BlockControls group="block">
-				<ToolbarButton
-					name="link"
-					icon={ isURLSet ? linkOff : link }
-					title={ isURLSet ? __( 'Unlink' ) : __( 'Link' ) }
-					shortcut={
-						isURLSet
-							? displayShortcut.primaryShift( 'k' )
-							: displayShortcut.primary( 'k' )
-					}
-					onClick={ isURLSet ? unlink : toggleLinkControl }
-					isActive={ isURLSet }
-					ref={ toggleButtonRef }
-				/>
+				<div tabIndex={ -1 } ref={ toggleButtonRef }>
+					<ToolbarButton
+						name="link"
+						icon={ isURLSet ? linkOff : link }
+						title={ isURLSet ? __( 'Unlink' ) : __( 'Link' ) }
+						shortcut={
+							isURLSet
+								? displayShortcut.primaryShift( 'k' )
+								: displayShortcut.primary( 'k' )
+						}
+						onClick={ isURLSet ? unlink : toggleLinkControl }
+						isActive={ isURLSet }
+					/>
+				</div>
 			</BlockControls>
 			{ isSelected && ( isEditingURL || isURLSet ) && (
 				<Popover
@@ -222,17 +223,19 @@ function ButtonEdit( props ) {
 
 						if (
 							// When clicking the toggle button, focus will
-							// either move to the button or the toolbar (Safari)
-							// so do not handle closing the popover because the
-							// toggle will handle it. Focus should remain on the
-							// toggle button.
-							! ownerDocument.activeElement.contains(
-								toggleButtonRef.current
+							// either move to the button or the focusable div
+							// (Safari) so do not handle closing the popover
+							// because the toggle will handle it. Focus should
+							// remain on the toggle button.
+							toggleButtonRef.current.contains(
+								ownerDocument.activeElement
 							)
 						) {
-							setIsEditingURL( false );
-							richTextRef.current?.focus();
+							return;
 						}
+
+						setIsEditingURL( false );
+						richTextRef.current?.focus();
 					} }
 					anchorRef={ ref?.current }
 					focusOnMount={ isEditingURL ? 'firstElement' : false }

@@ -595,14 +595,17 @@ export default function NavigationLinkEdit( {
 		<Fragment>
 			<BlockControls>
 				<ToolbarGroup>
-					<ToolbarButton
-						name="link"
-						icon={ linkIcon }
-						title={ __( 'Link' ) }
-						shortcut={ displayShortcut.primary( 'k' ) }
-						onClick={ () => setIsLinkOpen( ( value ) => ! value ) }
-						ref={ toggleButtonRef }
-					/>
+					<div tabIndex={ -1 } ref={ toggleButtonRef }>
+						<ToolbarButton
+							name="link"
+							icon={ linkIcon }
+							title={ __( 'Link' ) }
+							shortcut={ displayShortcut.primary( 'k' ) }
+							onClick={ () =>
+								setIsLinkOpen( ( value ) => ! value )
+							}
+						/>
+					</div>
 					{ ! isAtMaxNesting && (
 						<ToolbarButton
 							name="submenu"
@@ -694,15 +697,15 @@ export default function NavigationLinkEdit( {
 								if (
 									// When clicking the toggle button, focus
 									// will either move to the button or the
-									// toolbar (Safari) so do not handle closing
-									// the popover because the toggle will
-									// handle it. Focus should remain on the
-									// toggle button.
-									ownerDocument.activeElement.contains(
-										toggleButtonRef.current
+									// focusable div (Safari) so do not handle
+									// closing the popover because the toggle
+									// will handle it. Focus should remain on
+									// the toggle button.
+									toggleButtonRef.current.contains(
+										ownerDocument.activeElement
 									) ||
-									ownerDocument.activeElement ===
-										listItemRef.current
+									listItemRef.current ===
+										ownerDocument.activeElement
 								) {
 									return;
 								}

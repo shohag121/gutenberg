@@ -75,12 +75,12 @@ export default function PostDateEdit( {
 
 						if (
 							// When clicking the toggle button, focus will
-							// either move to the button or the toolbar (Safari)
-							// so do not handle closing the popover because the
-							// toggle will handle it. Focus should remain on the
-							// toggle button.
-							ownerDocument.activeElement.contains(
-								toggleButtonRef.current
+							// either move to the button or the focusable div
+							// (Safari) so do not handle closing the popover
+							// because the toggle will handle it. Focus should
+							// remain on the toggle button.
+							toggleButtonRef.current.contains(
+								ownerDocument.activeElement
 							)
 						) {
 							return;
@@ -121,16 +121,15 @@ export default function PostDateEdit( {
 				/>
 
 				{ date && ! isDescendentOfQueryLoop && (
-					<ToolbarButton
-						icon={ edit }
-						title={ __( 'Change Date' ) }
-						onClick={ () =>
-							setIsPickerOpen(
-								( _isPickerOpen ) => ! _isPickerOpen
-							)
-						}
-						ref={ toggleButtonRef }
-					/>
+					<div tabIndex={ -1 } ref={ toggleButtonRef }>
+						<ToolbarButton
+							icon={ edit }
+							title={ __( 'Change Date' ) }
+							onClick={ () =>
+								setIsPickerOpen( ( value ) => ! value )
+							}
+						/>
+					</div>
 				) }
 			</BlockControls>
 
