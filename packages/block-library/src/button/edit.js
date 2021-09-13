@@ -120,6 +120,7 @@ function ButtonEdit( props ) {
 		}
 	}
 
+	const toggleButtonRef = useRef();
 	const borderProps = useBorderProps( attributes );
 	const colorProps = useColorProps( attributes );
 	const spacingProps = useSpacingProps( attributes );
@@ -130,6 +131,10 @@ function ButtonEdit( props ) {
 	const [ isEditingURL, setIsEditingURL ] = useState( false );
 	const isURLSet = !! url;
 	const opensInNewTab = linkTarget === '_blank';
+
+	function toggleLinkControl() {
+		setIsEditingURL( ( value ) => ! value );
+	}
 
 	function startEditing( event ) {
 		event.preventDefault();
@@ -195,32 +200,39 @@ function ButtonEdit( props ) {
 				/>
 			</div>
 			<BlockControls group="block">
-				{ ! isURLSet && (
-					<ToolbarButton
-						name="link"
-						icon={ link }
-						title={ __( 'Link' ) }
-						shortcut={ displayShortcut.primary( 'k' ) }
-						onClick={ startEditing }
-					/>
-				) }
-				{ isURLSet && (
-					<ToolbarButton
-						name="link"
-						icon={ linkOff }
-						title={ __( 'Unlink' ) }
-						shortcut={ displayShortcut.primaryShift( 'k' ) }
-						onClick={ unlink }
-						isActive={ true }
-					/>
-				) }
+				<ToolbarButton
+					name="link"
+					icon={ isURLSet ? linkOff : link }
+					title={ isURLSet ? __( 'Unlink' ) : __( 'Link' ) }
+					shortcut={
+						isURLSet
+							? displayShortcut.primaryShift( 'k' )
+							: displayShortcut.primary( 'k' )
+					}
+					onClick={ isURLSet ? unlink : toggleLinkControl }
+					isActive={ isURLSet }
+					ref={ toggleButtonRef }
+				/>
 			</BlockControls>
 			{ isSelected && ( isEditingURL || isURLSet ) && (
 				<Popover
 					position="bottom center"
 					onClose={ () => {
-						setIsEditingURL( false );
-						richTextRef.current?.focus();
+						const { ownerDocument } = toggleButtonRef.current;
+
+						if (
+							// When clicking the toggle button, focus will
+							// either move to the button or the toolbar (Safari)
+							// so do not handle closing the popover because the
+							// toggle will handle it. Focus should remain on the
+							// toggle button.
+							! ownerDocument.activeElement.contains(
+								toggleButtonRef.current
+							)
+						) {
+							setIsEditingURL( false );
+							richTextRef.current?.focus();
+						}
 					} }
 					anchorRef={ ref?.current }
 					focusOnMount={ isEditingURL ? 'firstElement' : false }
