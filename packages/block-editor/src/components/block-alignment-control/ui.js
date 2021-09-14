@@ -79,11 +79,23 @@ function BlockAlignmentUI( {
 			return;
 		}
 		const info = {};
-		if ( !! contentSize ) {
+		/**
+		 * Besides checking if `contentSize` and `wideSize` have a
+		 * value, we now show this information only if their values
+		 * are not a `css var`. This needs to change when parsing
+		 * css variables land.
+		 *
+		 * @see https://github.com/WordPress/gutenberg/pull/34710#issuecomment-918000752
+		 */
+		if ( !! contentSize && ! contentSize?.startsWith( 'var' ) ) {
 			// translators: %s: container size (i.e. 600px etc)
 			info.none = sprintf( __( 'Max %s wide' ), contentSize );
 		}
-		if ( wideAlignmentsSupport && !! wideSize ) {
+		if (
+			wideAlignmentsSupport &&
+			!! wideSize &&
+			! wideSize?.startsWith( 'var' )
+		) {
 			// translators: %s: container size (i.e. 600px etc)
 			info.wide = sprintf( __( 'Max %s wide' ), wideSize );
 		}
@@ -106,17 +118,13 @@ function BlockAlignmentUI( {
 		BLOCK_ALIGNMENTS_CONTROLS[ DEFAULT_CONTROL ];
 
 	const UIComponent = isToolbar ? ToolbarGroup : ToolbarDropdownMenu;
-	const hasActive = enabledControls.some( ( control ) => control === value );
 	const commonProps = {
 		popoverProps: POPOVER_PROPS,
 		icon: activeAlignmentControl
 			? activeAlignmentControl.icon
 			: defaultAlignmentControl.icon,
 		label: __( 'Align' ),
-		toggleProps: {
-			describedBy: __( 'Change alignment' ),
-			className: hasActive ? 'is-pressed' : undefined,
-		},
+		toggleProps: { describedBy: __( 'Change alignment' ) },
 	};
 	const extraProps = isToolbar
 		? {
