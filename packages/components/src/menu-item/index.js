@@ -75,7 +75,7 @@ export function MenuItem(
 					: undefined
 			}
 			role={ role }
-			icon={ iconPosition === 'left' && icon }
+			icon={ iconPosition === 'left' ? icon : undefined }
 			className={ className }
 			{ ...props }
 		>
